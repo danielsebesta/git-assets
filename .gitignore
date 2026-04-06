@@ -16,3 +16,9 @@ Thumbs.db
 .env
 .env.local
 .dev.vars
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example

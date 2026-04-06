@@ -1,4 +1,4 @@
-import { getToken } from './auth.js';
+import { getToken } from './auth.js?v=2';
 
 const API = 'https://api.github.com';
 
