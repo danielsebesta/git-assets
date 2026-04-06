@@ -1,0 +1,9 @@
+name = "git-assets-auth"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Set these via `wrangler secret put` or in the Cloudflare dashboard:
+# GITHUB_CLIENT_ID
+# GITHUB_CLIENT_SECRET
+# WORKER_URL       — e.g. https://git-assets-auth.yourname.workers.dev
+# FRONTEND_URL     — e.g. https://yourname.github.io/git-assets
