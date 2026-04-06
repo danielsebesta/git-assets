@@ -236,6 +236,16 @@ body {
   flex-wrap: wrap;
 }
 
+.repo-size {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  background: var(--bg);
+  border-radius: 4px;
+}
+
+.repo-size-warn { color: var(--danger); }
+
 .breadcrumbs {
   display: flex;
   align-items: center;

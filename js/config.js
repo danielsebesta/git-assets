@@ -1,4 +1,4 @@
-import { listRepos } from './github.js?v=5';
+import { listRepos } from './github.js?v=6';
 
 const CONFIG_KEY = 'gitassets_config';
 const REPOS_KEY = 'gitassets_repos';

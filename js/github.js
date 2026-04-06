@@ -1,4 +1,4 @@
-import { getToken } from './auth.js?v=5';
+import { getToken } from './auth.js?v=6';
 
 const API = 'https://api.github.com';
 
@@ -31,6 +31,85 @@ export async function listRepos() {
   }
   return repos;
 }
+
+export async function getRepoInfo(owner, repo) {
+  const res = await fetch(`${API}/repos/${owner}/${repo}`, { headers: headers() });
+  if (!res.ok) throw new Error('Failed to fetch repo info');
+  return res.json();
+}
+
+export async function batchUpload(owner, repo, branch, files, message) {
+  // Git Data API: create blobs → get current tree → build new tree → create commit → update ref
+  // This creates a single commit for all files (1 push instead of N)
+
+  // 1. Get the current commit SHA for the branch
+  const refRes = await fetch(`${API}/repos/${owner}/${repo}/git/ref/heads/${branch}`, {
+    headers: headers(),
+  });
+  if (!refRes.ok) throw new Error('Failed to get branch ref');
+  const refData = await refRes.json();
+  const baseSha = refData.object.sha;
+
+  // 2. Get the base tree
+  const commitRes = await fetch(`${API}/repos/${owner}/${repo}/git/commits/${baseSha}`, {
+    headers: headers(),
+  });
+  if (!commitRes.ok) throw new Error('Failed to get base commit');
+  const commitData = await commitRes.json();
+  const baseTreeSha = commitData.tree.sha;
+
+  // 3. Create blobs for each file
+  const treeItems = [];
+  for (const file of files) {
+    const blobRes = await fetch(`${API}/repos/${owner}/${repo}/git/blobs`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ content: file.base64, encoding: 'base64' }),
+    });
+    if (!blobRes.ok) throw new Error(`Failed to create blob for ${file.path}`);
+    const blobData = await blobRes.json();
+    treeItems.push({
+      path: file.path,
+      mode: '100644',
+      type: 'blob',
+      sha: blobData.sha,
+    });
+  }
+
+  // 4. Create new tree
+  const treeRes = await fetch(`${API}/repos/${owner}/${repo}/git/trees`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems }),
+  });
+  if (!treeRes.ok) throw new Error('Failed to create tree');
+  const treeData = await treeRes.json();
+
+  // 5. Create commit
+  const newCommitRes = await fetch(`${API}/repos/${owner}/${repo}/git/commits`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({
+      message,
+      tree: treeData.sha,
+      parents: [baseSha],
+    }),
+  });
+  if (!newCommitRes.ok) throw new Error('Failed to create commit');
+  const newCommitData = await newCommitRes.json();
+
+  // 6. Update branch ref
+  const updateRes = await fetch(`${API}/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
+    method: 'PATCH',
+    headers: headers(),
+    body: JSON.stringify({ sha: newCommitData.sha }),
+  });
+  if (!updateRes.ok) throw new Error('Failed to update branch');
+
+  return newCommitData;
+}
+
+export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB (GitHub enforced limit)
 
 export async function listFiles(owner, repo, path = '') {
   const endpoint = path

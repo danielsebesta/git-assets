@@ -1,7 +1,7 @@
-import { login, logout, getToken } from './auth.js?v=5';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=5';
-import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos } from './config.js?v=5';
-import { compressImage } from './compress.js?v=5';
+import { login, logout, getToken } from './auth.js?v=6';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=6';
+import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos } from './config.js?v=6';
+import { compressImage } from './compress.js?v=6';
 
 const GITHUB_ICON = `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>`;
 
@@ -135,6 +135,7 @@ export async function renderDashboard() {
         <div class="breadcrumbs" id="breadcrumbs"></div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn btn-sm" id="change-repo-btn" title="Change repository">${config.owner}/${config.repo}</button>
+          <span class="repo-size" id="repo-size"></span>
           <button class="btn btn-sm" id="select-btn">Select</button>
           <button class="btn btn-sm" id="new-folder-btn">New folder</button>
           <button class="btn btn-sm" id="history-btn">History</button>
@@ -184,6 +185,7 @@ export async function renderDashboard() {
   setupFilterSort(config);
   setupKeyboardShortcuts(config);
   await loadFiles(config);
+  loadRepoSize(config);
 }
 
 function renderBreadcrumbs() {
@@ -878,37 +880,47 @@ async function commitStagedFiles(message) {
   const config = getConfig();
   if (!config || stagedFiles.length === 0) return;
 
+  // Check file size limits
+  const oversized = stagedFiles.filter((s) => s.file.size > MAX_FILE_SIZE);
+  if (oversized.length > 0) {
+    showToast(`${oversized.map((s) => s.file.name).join(', ')} exceeds 100 MB limit`, 'error');
+    return;
+  }
+
   const files = [...stagedFiles];
   const defaultMsg = files.length === 1
     ? `Upload ${files[0].file.name}`
     : `Upload ${files.length} files`;
+  const commitMsg = message || defaultMsg;
 
   const bar = $('#upload-bar');
   const fill = $('#upload-fill');
   const status = $('#upload-status');
   bar.classList.add('visible');
 
-  let done = 0;
-  for (const staged of files) {
-    status.textContent = `Uploading ${staged.file.name} (${done + 1}/${files.length})...`;
-    fill.style.width = `${(done / files.length) * 100}%`;
-
-    try {
-      const base64 = await fileToBase64(staged.file);
-      const path = currentPath ? `${currentPath}/${staged.file.name}` : staged.file.name;
-      const commitMsg = files.length === 1
-        ? (message || defaultMsg)
-        : `${message || defaultMsg} [${done + 1}/${files.length}]`;
-      await uploadFile(config.owner, config.repo, path, base64, commitMsg);
-      URL.revokeObjectURL(staged.preview);
-      done++;
-    } catch (err) {
-      showToast(`Failed to upload ${staged.file.name}: ${err.message}`, 'error');
+  try {
+    // Prepare all blobs
+    const batchFiles = [];
+    for (let i = 0; i < files.length; i++) {
+      status.textContent = `Preparing ${files[i].file.name} (${i + 1}/${files.length})...`;
+      fill.style.width = `${(i / files.length) * 50}%`;
+      const base64 = await fileToBase64(files[i].file);
+      const path = currentPath ? `${currentPath}/${files[i].file.name}` : files[i].file.name;
+      batchFiles.push({ path, base64 });
     }
+
+    // Single batch commit
+    status.textContent = `Committing ${files.length} file${files.length > 1 ? 's' : ''}...`;
+    fill.style.width = '75%';
+    await batchUpload(config.owner, config.repo, config.branch, batchFiles, commitMsg);
+
+    files.forEach((s) => URL.revokeObjectURL(s.preview));
+    fill.style.width = '100%';
+    status.textContent = `Uploaded ${files.length} file${files.length > 1 ? 's' : ''}`;
+  } catch (err) {
+    showToast(`Upload failed: ${err.message}`, 'error');
   }
 
-  fill.style.width = '100%';
-  status.textContent = `Uploaded ${done}/${files.length} files`;
   setTimeout(() => {
     bar.classList.remove('visible');
     fill.style.width = '0%';
@@ -917,6 +929,7 @@ async function commitStagedFiles(message) {
   stagedFiles = [];
   renderStagingArea();
   await loadFiles(config);
+  loadRepoSize(config);
 }
 
 function setupClipboardPaste() {
@@ -1181,6 +1194,23 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ── Repo Size ──
+
+async function loadRepoSize(config) {
+  try {
+    const info = await getRepoInfo(config.owner, config.repo);
+    const sizeEl = $('#repo-size');
+    if (sizeEl) {
+      const sizeKB = info.size;
+      sizeEl.textContent = formatSize(sizeKB * 1024);
+      // Warn if approaching limit
+      if (sizeKB > 5 * 1024 * 1024) { // > 5 GB
+        sizeEl.classList.add('repo-size-warn');
+      }
+    }
+  } catch { /* ignore */ }
 }
 
 // ── Helpers ──
