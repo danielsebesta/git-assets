@@ -1,14 +1,14 @@
-import { login, logout, getToken } from './auth.js?v=6';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=6';
-import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos } from './config.js?v=6';
-import { compressImage } from './compress.js?v=6';
+import { login, logout, getToken } from './auth.js?v=7';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=7';
+import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos } from './config.js?v=7';
+import { compressImage } from './compress.js?v=7';
+import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=7';
 
 const GITHUB_ICON = `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>`;
 
 let currentUser = null;
 let currentPath = ASSETS_ROOT;
 let allRepos = null;
-let selectedFiles = new Set();
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -136,7 +136,6 @@ export async function renderDashboard() {
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn btn-sm" id="change-repo-btn" title="Change repository">${config.owner}/${config.repo}</button>
           <span class="repo-size" id="repo-size"></span>
-          <button class="btn btn-sm" id="select-btn">Select</button>
           <button class="btn btn-sm" id="new-folder-btn">New folder</button>
           <button class="btn btn-sm" id="history-btn">History</button>
           <button class="btn btn-primary btn-sm" id="upload-btn">Upload</button>
@@ -146,8 +145,9 @@ export async function renderDashboard() {
         <span id="bulk-count">0 selected</span>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-sm" id="bulk-select-all">Select all</button>
-          <button class="btn btn-sm btn-danger" id="bulk-delete">Delete selected</button>
-          <button class="btn btn-sm" id="bulk-cancel">Cancel</button>
+          <button class="btn btn-sm" id="bulk-copy">Copy URLs</button>
+          <button class="btn btn-sm btn-danger" id="bulk-delete">Delete</button>
+          <button class="btn btn-sm" id="bulk-clear">Clear</button>
         </div>
       </div>
       <div class="filter-bar">
@@ -181,9 +181,10 @@ export async function renderDashboard() {
   setupHistoryButton(config);
   setupClipboardPaste();
   setupNewFolder(config);
-  setupSelectMode(config);
+  setupSelectionBar(config);
   setupFilterSort(config);
   setupKeyboardShortcuts(config);
+  initSelection((sel) => onSelectionChange(sel, config));
   await loadFiles(config);
   loadRepoSize(config);
 }
@@ -232,6 +233,7 @@ async function loadFiles(config) {
     }
 
     currentFiles = files;
+    setFiles(files);
 
     // Apply search filter
     const query = ($('#search-input')?.value || '').toLowerCase();
@@ -260,20 +262,23 @@ async function loadFiles(config) {
     area.innerHTML = `<div class="file-grid" id="file-grid"></div>`;
     const grid = $('#file-grid');
 
-    for (const file of filtered) {
-      grid.appendChild(createFileCard(file, config));
-    }
+    filtered.forEach((file, idx) => {
+      grid.appendChild(createFileCard(file, config, idx));
+    });
   } catch (err) {
     area.innerHTML = `<div class="empty-state"><p style="color:var(--danger);">Error: ${err.message}</p></div>`;
   }
 }
 
-function createFileCard(file, config) {
+function createFileCard(file, config, index) {
   const card = document.createElement('div');
   card.className = 'file-card';
+  if (isSelected(file.path)) card.classList.add('selected');
 
   const isImage = /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
   const isDir = file.type === 'dir';
+
+  if (!isDir) card.dataset.path = file.path;
 
   let thumbHtml;
   if (isDir) {
@@ -287,19 +292,13 @@ function createFileCard(file, config) {
 
   const sizeText = file.size ? formatSize(file.size) : '';
 
-  const checked = selectedFiles.has(file.path) ? 'checked' : '';
-  const checkboxHtml = selectMode && !isDir
-    ? `<label class="file-checkbox"><input type="checkbox" ${checked} data-path="${file.path}" /></label>`
-    : '';
-
   card.innerHTML = `
-    ${checkboxHtml}
     ${thumbHtml}
     <div class="file-info">
       <div class="file-name" title="${file.name}">${file.name}</div>
       ${sizeText ? `<div class="file-size">${sizeText}</div>` : ''}
     </div>
-    ${!isDir && !selectMode ? `
+    ${!isDir ? `
     <div class="file-actions">
       <button class="btn-icon" title="Copy URL" data-action="copy-menu">&#128279;</button>
       <button class="btn-icon" title="Delete" data-action="delete" style="color:var(--danger);">&#128465;</button>
@@ -307,30 +306,26 @@ function createFileCard(file, config) {
     ` : ''}
   `;
 
-  const checkbox = card.querySelector('input[type="checkbox"]');
-  if (checkbox) {
-    checkbox.addEventListener('change', () => {
-      if (checkbox.checked) selectedFiles.add(file.path);
-      else selectedFiles.delete(file.path);
-      updateBulkCount();
-    });
-  }
-
   if (isDir) {
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => {
       currentPath = file.path;
+      clearSelection();
       renderBreadcrumbs();
       loadFiles(config);
     });
-  }
+  } else {
+    // Click to select (OS-style: click, shift+click, ctrl+click)
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('[data-action]') || e.target.closest('.rename-input')) return;
+      selectionClick(file.path, index, e);
+    });
 
-  // Click to open URL panel (single click on image/thumb area)
-  if (!isDir && !selectMode) {
+    // Double-click on thumbnail opens URL panel
     const thumbEl = card.querySelector('.file-thumb, .file-thumb-placeholder');
     if (thumbEl) {
       thumbEl.style.cursor = 'pointer';
-      thumbEl.addEventListener('click', (e) => {
+      thumbEl.addEventListener('dblclick', (e) => {
         e.stopPropagation();
         showUrlPanel(file, config);
       });
@@ -587,22 +582,25 @@ function setupKeyboardShortcuts(config) {
     // Don't trigger in input fields
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
-    // Escape — close modals
+    // Escape — close modals or clear selection
     if (e.key === 'Escape') {
       const modal = $('.modal-overlay');
       if (modal) { modal.remove(); return; }
-      // Exit select mode
-      if (selectMode) {
-        selectMode = false;
-        selectedFiles.clear();
-        $('#select-btn').textContent = 'Select';
-        $('#bulk-bar').style.display = 'none';
-        loadFiles(config);
+      if (getSelected().size > 0) {
+        clearSelection();
+        return;
       }
     }
 
-    // Delete — delete selected files in select mode
-    if ((e.key === 'Delete' || e.key === 'Backspace') && selectMode && selectedFiles.size > 0) {
+    // Ctrl+A — select all
+    if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+      e.preventDefault();
+      selectAll();
+      return;
+    }
+
+    // Delete — delete selected files
+    if ((e.key === 'Delete' || e.key === 'Backspace') && getSelected().size > 0) {
       e.preventDefault();
       $('#bulk-delete').click();
     }
@@ -654,49 +652,52 @@ function renderFileGrid(config) {
 
   area.innerHTML = `<div class="file-grid" id="file-grid"></div>`;
   const grid = $('#file-grid');
-  for (const file of filtered) {
-    grid.appendChild(createFileCard(file, config));
-  }
+  filtered.forEach((file, idx) => {
+    grid.appendChild(createFileCard(file, config, idx));
+  });
 }
 
-// ── Select Mode ──
+// ── Selection Bar ──
 
-let selectMode = false;
 let currentFiles = [];
 
-function setupSelectMode(config) {
-  $('#select-btn').addEventListener('click', () => {
-    selectMode = !selectMode;
-    selectedFiles.clear();
-    $('#select-btn').textContent = selectMode ? 'Cancel select' : 'Select';
-    $('#bulk-bar').style.display = selectMode ? 'flex' : 'none';
-    updateBulkCount();
-    // Re-render to show/hide checkboxes
-    loadFiles(config);
-  });
+function onSelectionChange(sel, config) {
+  const bar = $('#bulk-bar');
+  const count = sel.size;
+  if (bar) bar.style.display = count > 0 ? 'flex' : 'none';
+  const countEl = $('#bulk-count');
+  if (countEl) countEl.textContent = `${count} selected`;
 
-  $('#bulk-cancel').addEventListener('click', () => {
-    selectMode = false;
-    selectedFiles.clear();
-    $('#select-btn').textContent = 'Select';
-    $('#bulk-bar').style.display = 'none';
-    loadFiles(config);
+  // Update visual selection on cards
+  document.querySelectorAll('.file-card[data-path]').forEach((card) => {
+    card.classList.toggle('selected', sel.has(card.dataset.path));
   });
+}
+
+function setupSelectionBar(config) {
+  $('#bulk-clear').addEventListener('click', () => clearSelection());
 
   $('#bulk-select-all').addEventListener('click', () => {
+    const sel = getSelected();
     const allFiles = currentFiles.filter((f) => f.type !== 'dir');
-    if (selectedFiles.size === allFiles.length) {
-      selectedFiles.clear();
-    } else {
-      allFiles.forEach((f) => selectedFiles.add(f.path));
-    }
-    updateBulkCount();
-    loadFiles(config);
+    if (sel.size === allFiles.length) clearSelection();
+    else selectAll();
+  });
+
+  $('#bulk-copy').addEventListener('click', () => {
+    const sel = getSelected();
+    if (sel.size === 0) return;
+    const urls = [...sel].map((path) =>
+      getCdnUrl(config.owner, config.repo, config.branch, path)
+    ).join('\n');
+    copyToClipboard(urls);
+    showToast(`Copied ${sel.size} URL${sel.size > 1 ? 's' : ''}`);
   });
 
   $('#bulk-delete').addEventListener('click', () => {
-    if (selectedFiles.size === 0) return;
-    const count = selectedFiles.size;
+    const sel = getSelected();
+    if (sel.size === 0) return;
+    const count = sel.size;
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
@@ -714,7 +715,7 @@ function setupSelectMode(config) {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
     overlay.querySelector('#modal-confirm').addEventListener('click', async () => {
       overlay.remove();
-      const paths = [...selectedFiles];
+      const paths = [...sel];
       let done = 0;
       for (const path of paths) {
         const file = currentFiles.find((f) => f.path === path);
@@ -727,18 +728,10 @@ function setupSelectMode(config) {
         }
       }
       showToast(`Deleted ${done} file${done > 1 ? 's' : ''}`);
-      selectedFiles.clear();
-      selectMode = false;
-      $('#select-btn').textContent = 'Select';
-      $('#bulk-bar').style.display = 'none';
+      clearSelection();
       await loadFiles(config);
     });
   });
-}
-
-function updateBulkCount() {
-  const el = $('#bulk-count');
-  if (el) el.textContent = `${selectedFiles.size} selected`;
 }
 
 // ── Staging & Upload ──

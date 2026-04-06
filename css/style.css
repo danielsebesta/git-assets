@@ -334,6 +334,16 @@ body {
 }
 
 .file-card:hover { border-color: var(--text-muted); }
+.file-card.selected { border-color: var(--primary); background: rgba(88, 166, 255, 0.08); }
+[data-theme="light"] .file-card.selected { background: rgba(9, 105, 218, 0.08); }
+
+.rubber-band {
+  position: absolute;
+  border: 1px solid var(--primary);
+  background: rgba(88, 166, 255, 0.1);
+  pointer-events: none;
+  z-index: 1000;
+}
 
 .file-thumb {
   width: 100%;
@@ -372,20 +382,6 @@ body {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 2px;
-}
-
-.file-checkbox {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 2;
-}
-
-.file-checkbox input {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--primary);
 }
 
 .file-card { position: relative; }
