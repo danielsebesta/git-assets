@@ -1,8 +1,8 @@
-import { login, logout, getToken } from './auth.js?v=8';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=8';
-import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites } from './config.js?v=8';
-import { compressImage } from './compress.js?v=8';
-import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=8';
+import { login, logout, getToken } from './auth.js?v=9';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=9';
+import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=9';
+import { compressImage } from './compress.js?v=9';
+import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=9';
 
 const GITHUB_ICON = `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>`;
 
@@ -139,6 +139,7 @@ export async function renderDashboard() {
             <div class="storage-bar-fill" id="storage-fill"></div>
             <span class="storage-label" id="storage-label"></span>
           </div>
+          <button class="btn btn-sm" id="stats-btn">Stats</button>
           <button class="btn btn-sm" id="new-folder-btn">New folder</button>
           <button class="btn btn-sm" id="history-btn">History</button>
           <button class="btn btn-primary btn-sm" id="upload-btn">Upload</button>
@@ -189,8 +190,11 @@ export async function renderDashboard() {
   setupKeyboardShortcuts(config);
   initSelection((sel) => onSelectionChange(sel, config));
   setupContextMenu(config);
+  setupStatsButton(config);
   await loadFiles(config);
   loadRepoSize(config);
+  renderRecentUploads(config);
+  showWalkthrough();
 }
 
 function renderBreadcrumbs() {
@@ -322,7 +326,48 @@ function createFileCard(file, config, index) {
       renderBreadcrumbs();
       loadFiles(config);
     });
+
+    // Folder is a drop target for moving files
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      card.classList.remove('drag-over');
+      const paths = JSON.parse(e.dataTransfer.getData('text/plain') || '[]');
+      if (paths.length === 0) return;
+      let moved = 0;
+      for (const oldPath of paths) {
+        const fname = oldPath.split('/').pop();
+        const newPath = `${file.path}/${fname}`;
+        try {
+          await renameFile(config.owner, config.repo, oldPath, newPath, `Move ${fname} to ${file.name}/`);
+          moved++;
+        } catch (err) {
+          showToast(`Failed to move ${fname}: ${err.message}`, 'error');
+        }
+      }
+      if (moved > 0) {
+        showToast(`Moved ${moved} file${moved > 1 ? 's' : ''} to ${file.name}/`);
+        clearSelection();
+        await loadFiles(config);
+      }
+    });
   } else {
+    // Make files draggable for moving into folders
+    card.draggable = true;
+    card.addEventListener('dragstart', (e) => {
+      const sel = getSelected();
+      const paths = sel.size > 0 && sel.has(file.path)
+        ? [...sel]
+        : [file.path];
+      e.dataTransfer.setData('text/plain', JSON.stringify(paths));
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
     // Click to select (OS-style: click, shift+click, ctrl+click)
     card.addEventListener('click', (e) => {
       if (e.target.closest('[data-action]') || e.target.closest('.rename-input')) return;
@@ -407,6 +452,7 @@ function showContextMenu(x, y, file, config) {
     { label: 'Download', action: 'download', hidden: multi },
     { divider: true },
     { label: 'Rename', action: 'rename', hidden: multi },
+    { label: `Batch rename (${sel.size})`, action: 'batch-rename', hidden: !multi },
     { label: isFavorite(file.path) ? 'Unpin' : 'Pin to top', action: 'toggle-fav', hidden: multi },
     { label: multi ? `Delete ${sel.size} files` : 'Delete', action: 'delete', danger: true },
   ].filter((i) => !i.hidden);
@@ -513,6 +559,9 @@ function handleContextAction(action, file, config) {
       if (nameEl) startRename(nameEl, file, config);
       break;
     }
+    case 'batch-rename':
+      showBatchRename(config);
+      break;
     case 'toggle-fav': {
       const added = toggleFavorite(file.path);
       showToast(added ? `Pinned ${file.name}` : `Unpinned ${file.name}`);
@@ -702,6 +751,102 @@ function showDeleteModal(file, config) {
       showToast(err.message, 'error');
     }
   });
+}
+
+// ── Batch Rename ──
+
+function showBatchRename(config) {
+  const sel = getSelected();
+  if (sel.size === 0) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:480px;">
+      <h3>Batch rename (${sel.size} files)</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin:12px 0;">
+        <label style="font-size:13px;color:var(--text-muted);">Add prefix</label>
+        <input type="text" id="br-prefix" class="staging-input" placeholder="e.g. banner-" />
+        <label style="font-size:13px;color:var(--text-muted);">Add suffix (before extension)</label>
+        <input type="text" id="br-suffix" class="staging-input" placeholder="e.g. -v2" />
+        <label style="font-size:13px;color:var(--text-muted);">Find & replace</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="br-find" class="staging-input" placeholder="Find" />
+          <input type="text" id="br-replace" class="staging-input" placeholder="Replace" />
+        </div>
+        <div id="br-preview" style="font-size:12px;color:var(--text-muted);max-height:120px;overflow-y:auto;margin-top:4px;"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-sm" id="br-cancel">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="br-apply">Rename</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const paths = [...sel];
+  const files = paths.map((p) => currentFiles.find((f) => f.path === p)).filter(Boolean);
+
+  const updatePreview = () => {
+    const prefix = overlay.querySelector('#br-prefix').value;
+    const suffix = overlay.querySelector('#br-suffix').value;
+    const find = overlay.querySelector('#br-find').value;
+    const replace = overlay.querySelector('#br-replace').value;
+    const preview = overlay.querySelector('#br-preview');
+
+    preview.innerHTML = files.slice(0, 10).map((f) => {
+      const newName = applyRename(f.name, prefix, suffix, find, replace);
+      const changed = newName !== f.name;
+      return `<div>${f.name} ${changed ? `&rarr; <strong>${escapeHtml(newName)}</strong>` : '<span style="color:var(--text-muted);">(no change)</span>'}</div>`;
+    }).join('') + (files.length > 10 ? `<div>...and ${files.length - 10} more</div>` : '');
+  };
+
+  ['#br-prefix', '#br-suffix', '#br-find', '#br-replace'].forEach((s) => {
+    overlay.querySelector(s).addEventListener('input', updatePreview);
+  });
+  updatePreview();
+
+  overlay.querySelector('#br-cancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  overlay.querySelector('#br-apply').addEventListener('click', async () => {
+    const prefix = overlay.querySelector('#br-prefix').value;
+    const suffix = overlay.querySelector('#br-suffix').value;
+    const find = overlay.querySelector('#br-find').value;
+    const replace = overlay.querySelector('#br-replace').value;
+    overlay.remove();
+
+    let renamed = 0;
+    for (const file of files) {
+      const newName = applyRename(file.name, prefix, suffix, find, replace);
+      if (newName === file.name) continue;
+      const dir = file.path.substring(0, file.path.lastIndexOf('/'));
+      const newPath = dir ? `${dir}/${newName}` : newName;
+      try {
+        await renameFile(config.owner, config.repo, file.path, newPath);
+        renamed++;
+      } catch (err) {
+        showToast(`Failed to rename ${file.name}: ${err.message}`, 'error');
+      }
+    }
+    if (renamed > 0) {
+      showToast(`Renamed ${renamed} file${renamed > 1 ? 's' : ''}`);
+      clearSelection();
+      await loadFiles(config);
+    }
+  });
+}
+
+function applyRename(name, prefix, suffix, find, replace) {
+  let result = name;
+  if (find) result = result.split(find).join(replace);
+  const dotIdx = result.lastIndexOf('.');
+  if (dotIdx > 0) {
+    result = prefix + result.substring(0, dotIdx) + suffix + result.substring(dotIdx);
+  } else {
+    result = prefix + result + suffix;
+  }
+  return result;
 }
 
 // ── New Folder ──
@@ -1106,6 +1251,8 @@ async function commitStagedFiles(message) {
     await batchUpload(config.owner, config.repo, config.branch, batchFiles, commitMsg);
 
     files.forEach((s) => URL.revokeObjectURL(s.preview));
+    // Track recent uploads
+    batchFiles.forEach((bf) => addRecent(bf.path, config.owner, config.repo, config.branch));
     fill.style.width = '100%';
     status.textContent = `Uploaded ${files.length} file${files.length > 1 ? 's' : ''}`;
   } catch (err) {
@@ -1415,6 +1562,222 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ── Walkthrough ──
+
+const WALKTHROUGH_KEY = 'gitassets_walkthrough_done';
+
+function showWalkthrough() {
+  if (localStorage.getItem(WALKTHROUGH_KEY)) return;
+
+  const steps = [
+    { el: '#dropzone', text: 'Drop files here or click Upload to stage them', pos: 'bottom' },
+    { el: '#search-input', text: 'Search and filter your files', pos: 'bottom' },
+    { el: '#change-repo-btn', text: 'Switch between repositories', pos: 'bottom' },
+    { el: '#storage-bar', text: 'Track your storage usage (1 GB limit)', pos: 'bottom' },
+    { el: '#history-btn', text: 'View upload history and deleted files', pos: 'bottom' },
+  ];
+
+  let current = 0;
+
+  function showStep() {
+    document.querySelectorAll('.walkthrough-tooltip').forEach((t) => t.remove());
+    document.querySelectorAll('.walkthrough-highlight').forEach((t) => t.classList.remove('walkthrough-highlight'));
+
+    if (current >= steps.length) {
+      localStorage.setItem(WALKTHROUGH_KEY, 'true');
+      return;
+    }
+
+    const step = steps[current];
+    const target = document.querySelector(step.el);
+    if (!target) { current++; showStep(); return; }
+
+    target.classList.add('walkthrough-highlight');
+    const rect = target.getBoundingClientRect();
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'walkthrough-tooltip';
+    tooltip.innerHTML = `
+      <div class="walkthrough-text">${step.text}</div>
+      <div class="walkthrough-actions">
+        <span class="walkthrough-counter">${current + 1}/${steps.length}</span>
+        <button class="btn btn-sm" id="wt-skip">Skip</button>
+        <button class="btn btn-primary btn-sm" id="wt-next">${current === steps.length - 1 ? 'Done' : 'Next'}</button>
+      </div>
+    `;
+
+    tooltip.style.top = `${rect.bottom + window.scrollY + 8}px`;
+    tooltip.style.left = `${rect.left + window.scrollX}px`;
+    document.body.appendChild(tooltip);
+
+    // Keep on screen
+    const ttRect = tooltip.getBoundingClientRect();
+    if (ttRect.right > window.innerWidth) {
+      tooltip.style.left = `${window.innerWidth - ttRect.width - 16}px`;
+    }
+
+    tooltip.querySelector('#wt-next').addEventListener('click', () => {
+      current++;
+      showStep();
+    });
+    tooltip.querySelector('#wt-skip').addEventListener('click', () => {
+      document.querySelectorAll('.walkthrough-tooltip').forEach((t) => t.remove());
+      document.querySelectorAll('.walkthrough-highlight').forEach((t) => t.classList.remove('walkthrough-highlight'));
+      localStorage.setItem(WALKTHROUGH_KEY, 'true');
+    });
+  }
+
+  // Delay slightly so DOM is ready
+  setTimeout(showStep, 500);
+}
+
+// ── Stats Dashboard ──
+
+function setupStatsButton(config) {
+  $('#stats-btn').addEventListener('click', () => showStats(config));
+}
+
+async function showStats(config) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:480px;">
+      <div class="history-header">
+        <h3>Repository Stats</h3>
+        <button class="btn-icon history-close">&times;</button>
+      </div>
+      <div style="text-align:center;padding:20px;"><span class="spinner"></span></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('.history-close').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  try {
+    const info = await getRepoInfo(config.owner, config.repo);
+    const sizeBytes = info.size * 1024;
+    const pct = Math.min((sizeBytes / STORAGE_LIMIT) * 100, 100);
+
+    // Count files by type in current view
+    const typeMap = {};
+    let totalFiles = 0;
+    let totalSize = 0;
+
+    for (const f of currentFiles) {
+      if (f.type === 'dir') continue;
+      totalFiles++;
+      totalSize += f.size || 0;
+      const ext = f.name.includes('.') ? f.name.split('.').pop().toLowerCase() : 'other';
+      typeMap[ext] = (typeMap[ext] || 0) + 1;
+    }
+
+    const sortedTypes = Object.entries(typeMap).sort((a, b) => b[1] - a[1]);
+    const folders = currentFiles.filter((f) => f.type === 'dir').length;
+
+    const modal = overlay.querySelector('.modal');
+    modal.innerHTML = `
+      <div class="history-header">
+        <h3>Repository Stats</h3>
+        <button class="btn-icon history-close">&times;</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stats-card">
+          <div class="stats-value">${formatSize(sizeBytes)}</div>
+          <div class="stats-label">Repository size</div>
+          <div class="stats-bar"><div class="stats-bar-fill ${pct > 90 ? 'danger' : pct > 70 ? 'warn' : 'ok'}" style="width:${pct}%"></div></div>
+          <div class="stats-sublabel">${pct.toFixed(1)}% of 1 GB used</div>
+        </div>
+        <div class="stats-row">
+          <div class="stats-card small">
+            <div class="stats-value">${totalFiles}</div>
+            <div class="stats-label">Files (current folder)</div>
+          </div>
+          <div class="stats-card small">
+            <div class="stats-value">${folders}</div>
+            <div class="stats-label">Folders</div>
+          </div>
+          <div class="stats-card small">
+            <div class="stats-value">${formatSize(totalSize)}</div>
+            <div class="stats-label">Current folder size</div>
+          </div>
+        </div>
+        ${sortedTypes.length > 0 ? `
+        <div class="stats-card">
+          <div class="stats-label" style="margin-bottom:8px;">File types</div>
+          <div class="stats-types">${sortedTypes.map(([ext, count]) =>
+            `<span class="stats-type">.${ext} <strong>${count}</strong></span>`
+          ).join('')}</div>
+        </div>
+        ` : ''}
+      </div>
+    `;
+
+    modal.querySelector('.history-close').addEventListener('click', () => overlay.remove());
+  } catch (err) {
+    overlay.querySelector('.modal').innerHTML = `<p style="color:var(--danger);padding:24px;">Error: ${err.message}</p>`;
+  }
+}
+
+// ── Recent Uploads ──
+
+function renderRecentUploads(config) {
+  let section = $('#recent-uploads');
+  const recent = getRecent().filter((r) => r.owner === config.owner && r.repo === config.repo);
+
+  if (recent.length === 0) {
+    if (section) section.remove();
+    return;
+  }
+
+  if (!section) {
+    section = document.createElement('div');
+    section.id = 'recent-uploads';
+    section.className = 'recent-uploads';
+    const dashboard = $('.dashboard');
+    const fileArea = $('#file-area');
+    dashboard.insertBefore(section, fileArea);
+  }
+
+  section.innerHTML = `
+    <div class="recent-header">
+      <span class="recent-title">Recent uploads</span>
+      <button class="btn-icon" id="recent-dismiss" title="Dismiss">&times;</button>
+    </div>
+    <div class="recent-list">${recent.map((r) => {
+      const name = r.path.split('/').pop();
+      const isImage = /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(name);
+      const url = getCdnUrl(r.owner, r.repo, r.branch, r.path);
+      const thumb = isImage ? getRawUrl(r.owner, r.repo, r.branch, r.path) : '';
+      const ago = timeAgo(r.time);
+      return `<div class="recent-item" data-url="${url}" title="${r.path}">
+        ${thumb ? `<img class="recent-thumb" src="${thumb}" />` : `<span class="recent-icon">&#128196;</span>`}
+        <span class="recent-name">${name}</span>
+        <span class="recent-time">${ago}</span>
+      </div>`;
+    }).join('')}</div>
+  `;
+
+  section.querySelector('#recent-dismiss').addEventListener('click', () => section.remove());
+
+  section.querySelectorAll('.recent-item').forEach((item) => {
+    item.addEventListener('click', () => {
+      copyToClipboard(item.dataset.url);
+      showToast('URL copied');
+    });
+  });
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
 }
 
 // ── Storage Bar ──

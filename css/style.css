@@ -357,6 +357,7 @@ body {
 
 .file-card:hover { border-color: var(--text-muted); }
 .file-card.selected { border-color: var(--primary); background: rgba(88, 166, 255, 0.08); }
+.file-card.drag-over { border-color: var(--success); background: rgba(63, 185, 80, 0.1); }
 [data-theme="light"] .file-card.selected { background: rgba(9, 105, 218, 0.08); }
 
 .rubber-band {
@@ -734,6 +735,63 @@ body {
   margin-top: 16px;
 }
 
+/* ── Stats ── */
+.stats-grid { display: flex; flex-direction: column; gap: 12px; }
+.stats-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+.stats-card.small { flex: 1; text-align: center; }
+.stats-row { display: flex; gap: 8px; }
+.stats-value { font-size: 24px; font-weight: 700; }
+.stats-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.stats-sublabel { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.stats-bar { height: 8px; background: var(--border); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+.stats-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+.stats-bar-fill.ok { background: var(--success); }
+.stats-bar-fill.warn { background: #d29922; }
+.stats-bar-fill.danger { background: var(--danger); }
+.stats-types { display: flex; flex-wrap: wrap; gap: 6px; }
+.stats-type { font-size: 12px; padding: 3px 8px; background: var(--surface); border-radius: 4px; color: var(--text-muted); }
+.stats-type strong { color: var(--text); }
+
+/* ── Recent Uploads ── */
+.recent-uploads {
+  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.recent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.recent-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.recent-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.recent-item:hover { border-color: var(--primary); }
+
+.recent-thumb { width: 24px; height: 24px; object-fit: cover; border-radius: 3px; }
+.recent-icon { font-size: 16px; }
+.recent-name { font-size: 12px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-time { font-size: 10px; color: var(--text-muted); }
+
 /* ── URL Panel ── */
 .url-panel { max-width: 600px; width: 95%; }
 
@@ -883,6 +941,35 @@ body {
 .history-status-deleted { color: var(--danger); }
 .history-status-added { color: var(--success); }
 .history-status-modified { color: var(--primary); }
+
+/* ── Walkthrough ── */
+.walkthrough-highlight {
+  position: relative;
+  z-index: 100;
+  box-shadow: 0 0 0 4px var(--primary), 0 0 20px rgba(88, 166, 255, 0.3);
+  border-radius: var(--radius);
+}
+
+.walkthrough-tooltip {
+  position: absolute;
+  z-index: 1010;
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  max-width: 280px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.walkthrough-text { font-size: 13px; margin-bottom: 10px; }
+
+.walkthrough-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.walkthrough-counter { font-size: 11px; color: var(--text-muted); flex: 1; }
 
 /* ── Responsive ── */
 @media (max-width: 640px) {

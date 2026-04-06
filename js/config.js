@@ -1,4 +1,4 @@
-import { listRepos } from './github.js?v=8';
+import { listRepos } from './github.js?v=9';
 
 const CONFIG_KEY = 'gitassets_config';
 const REPOS_KEY = 'gitassets_repos';
@@ -87,6 +87,24 @@ export function toggleFavorite(path) {
 
 export function isFavorite(path) {
   return getFavorites().includes(path);
+}
+
+// ── Recent Uploads ──
+const RECENT_KEY = 'gitassets_recent';
+const MAX_RECENT = 10;
+
+export function addRecent(path, owner, repo, branch) {
+  const recent = getRecent();
+  const entry = { path, owner, repo, branch, time: Date.now() };
+  // Remove if already exists
+  const filtered = recent.filter((r) => r.path !== path);
+  filtered.unshift(entry);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(filtered.slice(0, MAX_RECENT)));
+}
+
+export function getRecent() {
+  const stored = localStorage.getItem(RECENT_KEY);
+  return stored ? JSON.parse(stored) : [];
 }
 
 export function getRepoList(repos) {
