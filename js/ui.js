@@ -1,8 +1,8 @@
-import { login, logout, getToken } from './auth.js?v=7';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=7';
-import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos } from './config.js?v=7';
-import { compressImage } from './compress.js?v=7';
-import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=7';
+import { login, logout, getToken } from './auth.js?v=8';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=8';
+import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites } from './config.js?v=8';
+import { compressImage } from './compress.js?v=8';
+import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=8';
 
 const GITHUB_ICON = `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>`;
 
@@ -135,7 +135,10 @@ export async function renderDashboard() {
         <div class="breadcrumbs" id="breadcrumbs"></div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn btn-sm" id="change-repo-btn" title="Change repository">${config.owner}/${config.repo}</button>
-          <span class="repo-size" id="repo-size"></span>
+          <div class="storage-bar" id="storage-bar" title="Repository storage">
+            <div class="storage-bar-fill" id="storage-fill"></div>
+            <span class="storage-label" id="storage-label"></span>
+          </div>
           <button class="btn btn-sm" id="new-folder-btn">New folder</button>
           <button class="btn btn-sm" id="history-btn">History</button>
           <button class="btn btn-primary btn-sm" id="upload-btn">Upload</button>
@@ -185,6 +188,7 @@ export async function renderDashboard() {
   setupFilterSort(config);
   setupKeyboardShortcuts(config);
   initSelection((sel) => onSelectionChange(sel, config));
+  setupContextMenu(config);
   await loadFiles(config);
   loadRepoSize(config);
 }
@@ -232,18 +236,19 @@ async function loadFiles(config) {
       return;
     }
 
-    currentFiles = files;
-    setFiles(files);
-
     // Apply search filter
     const query = ($('#search-input')?.value || '').toLowerCase();
     let filtered = query
       ? files.filter((f) => f.name.toLowerCase().includes(query))
       : [...files];
 
-    // Sort
+    // Sort: pinned first, then folders, then by chosen sort
+    const favs = getFavorites();
     const sortVal = $('#sort-select')?.value || 'name-asc';
     filtered.sort((a, b) => {
+      const aFav = favs.includes(a.path) ? 1 : 0;
+      const bFav = favs.includes(b.path) ? 1 : 0;
+      if (aFav !== bFav) return bFav - aFav;
       if (a.type === 'dir' && b.type !== 'dir') return -1;
       if (a.type !== 'dir' && b.type === 'dir') return 1;
       switch (sortVal) {
@@ -253,6 +258,9 @@ async function loadFiles(config) {
         default: return a.name.localeCompare(b.name);
       }
     });
+
+    currentFiles = filtered;
+    setFiles(filtered);
 
     if (filtered.length === 0 && query) {
       area.innerHTML = `<div class="empty-state"><p>No files matching "${escapeHtml(query)}"</p></div>`;
@@ -285,7 +293,7 @@ function createFileCard(file, config, index) {
     thumbHtml = `<div class="file-thumb-placeholder"><span class="folder-icon">&#128193;</span></div>`;
   } else if (isImage) {
     const thumbUrl = getRawUrl(config.owner, config.repo, config.branch, file.path);
-    thumbHtml = `<img class="file-thumb" src="${thumbUrl}" alt="${file.name}" loading="lazy" />`;
+    thumbHtml = `<img class="file-thumb" src="${thumbUrl}" alt="${file.name}" loading="lazy" /><div class="hover-preview"><img src="${thumbUrl}" alt="${file.name}" /></div>`;
   } else {
     thumbHtml = `<div class="file-thumb-placeholder">&#128196;</div>`;
   }
@@ -295,7 +303,7 @@ function createFileCard(file, config, index) {
   card.innerHTML = `
     ${thumbHtml}
     <div class="file-info">
-      <div class="file-name" title="${file.name}">${file.name}</div>
+      <div class="file-name" title="${file.name}">${isFavorite(file.path) ? '<span class="pin-icon">&#128204;</span> ' : ''}${file.name}</div>
       ${sizeText ? `<div class="file-size">${sizeText}</div>` : ''}
     </div>
     ${!isDir ? `
@@ -356,6 +364,169 @@ function createFileCard(file, config, index) {
   });
 
   return card;
+}
+
+// ── Context Menu ──
+
+function setupContextMenu(config) {
+  document.addEventListener('contextmenu', (e) => {
+    const card = e.target.closest('.file-card[data-path]');
+    if (!card) return;
+    e.preventDefault();
+
+    const path = card.dataset.path;
+    const file = currentFiles.find((f) => f.path === path);
+    if (!file) return;
+
+    // If right-clicked file is not in selection, select only it
+    const sel = getSelected();
+    if (!sel.has(path)) {
+      clearSelection();
+      selectionClick(path, currentFiles.indexOf(file), { ctrlKey: false, shiftKey: false, metaKey: false });
+    }
+
+    showContextMenu(e.pageX, e.pageY, file, config);
+  });
+}
+
+function showContextMenu(x, y, file, config) {
+  document.querySelectorAll('.context-menu').forEach((m) => m.remove());
+
+  const sel = getSelected();
+  const multi = sel.size > 1;
+  const isImage = /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
+
+  const items = [
+    { label: multi ? `Copy ${sel.size} URLs (jsDelivr)` : 'Copy jsDelivr URL', action: 'copy-jsdelivr' },
+    { label: 'Copy all CDN URLs', action: 'copy-all' },
+    { label: 'Copy HTML snippet', action: 'copy-html' },
+    { label: 'Copy Markdown snippet', action: 'copy-md' },
+    { divider: true },
+    { label: 'Open URL panel', action: 'url-panel', hidden: multi },
+    { label: 'Open in new tab', action: 'open-tab', hidden: multi },
+    { label: 'Download', action: 'download', hidden: multi },
+    { divider: true },
+    { label: 'Rename', action: 'rename', hidden: multi },
+    { label: isFavorite(file.path) ? 'Unpin' : 'Pin to top', action: 'toggle-fav', hidden: multi },
+    { label: multi ? `Delete ${sel.size} files` : 'Delete', action: 'delete', danger: true },
+  ].filter((i) => !i.hidden);
+
+  const menu = document.createElement('div');
+  menu.className = 'context-menu';
+
+  for (const item of items) {
+    if (item.divider) {
+      menu.innerHTML += `<div class="context-divider"></div>`;
+      continue;
+    }
+    const cls = item.danger ? ' context-item-danger' : '';
+    menu.innerHTML += `<button class="context-item${cls}" data-action="${item.action}">${item.label}</button>`;
+  }
+
+  // Position — keep on screen
+  menu.style.top = `${y}px`;
+  menu.style.left = `${x}px`;
+  document.body.appendChild(menu);
+
+  const rect = menu.getBoundingClientRect();
+  if (rect.right > window.innerWidth) menu.style.left = `${x - rect.width}px`;
+  if (rect.bottom > window.innerHeight) menu.style.top = `${y - rect.height}px`;
+
+  menu.querySelectorAll('.context-item').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.remove();
+      handleContextAction(btn.dataset.action, file, config);
+    });
+  });
+
+  const close = (e) => {
+    if (!menu.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener('click', close);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', close), 0);
+}
+
+function handleContextAction(action, file, config) {
+  const sel = getSelected();
+  const paths = sel.size > 0 ? [...sel] : [file.path];
+
+  switch (action) {
+    case 'copy-jsdelivr': {
+      const urls = paths.map((p) => getCdnUrl(config.owner, config.repo, config.branch, p)).join('\n');
+      copyToClipboard(urls);
+      showToast(`Copied ${paths.length} URL${paths.length > 1 ? 's' : ''}`);
+      break;
+    }
+    case 'copy-all': {
+      const all = paths.flatMap((p) =>
+        CDN_PROVIDERS.map((prov) => prov.url(config.owner, config.repo, config.branch, p))
+      ).join('\n');
+      copyToClipboard(all);
+      showToast('All CDN URLs copied');
+      break;
+    }
+    case 'copy-html': {
+      const html = paths.map((p) => {
+        const url = getCdnUrl(config.owner, config.repo, config.branch, p);
+        const name = p.split('/').pop();
+        return /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(name)
+          ? `<img src="${url}" alt="${name}" />`
+          : `<a href="${url}">${name}</a>`;
+      }).join('\n');
+      copyToClipboard(html);
+      showToast('HTML copied');
+      break;
+    }
+    case 'copy-md': {
+      const md = paths.map((p) => {
+        const url = getCdnUrl(config.owner, config.repo, config.branch, p);
+        const name = p.split('/').pop();
+        return /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(name)
+          ? `![${name}](${url})`
+          : `[${name}](${url})`;
+      }).join('\n');
+      copyToClipboard(md);
+      showToast('Markdown copied');
+      break;
+    }
+    case 'url-panel':
+      showUrlPanel(file, config);
+      break;
+    case 'open-tab': {
+      const url = getRawUrl(config.owner, config.repo, config.branch, file.path);
+      window.open(url, '_blank');
+      break;
+    }
+    case 'download': {
+      const url = getRawUrl(config.owner, config.repo, config.branch, file.path);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      break;
+    }
+    case 'rename': {
+      const nameEl = document.querySelector(`.file-card[data-path="${file.path}"] .file-name`);
+      if (nameEl) startRename(nameEl, file, config);
+      break;
+    }
+    case 'toggle-fav': {
+      const added = toggleFavorite(file.path);
+      showToast(added ? `Pinned ${file.name}` : `Unpinned ${file.name}`);
+      loadFiles(config);
+      break;
+    }
+    case 'delete':
+      if (sel.size > 1) {
+        $('#bulk-delete').click();
+      } else {
+        showDeleteModal(file, config);
+      }
+      break;
+  }
 }
 
 function showUrlPanel(file, config) {
@@ -633,8 +804,12 @@ function renderFileGrid(config) {
     ? currentFiles.filter((f) => f.name.toLowerCase().includes(query))
     : [...currentFiles];
 
+  const favs = getFavorites();
   const sortVal = $('#sort-select')?.value || 'name-asc';
   filtered.sort((a, b) => {
+    const aFav = favs.includes(a.path) ? 1 : 0;
+    const bFav = favs.includes(b.path) ? 1 : 0;
+    if (aFav !== bFav) return bFav - aFav;
     if (a.type === 'dir' && b.type !== 'dir') return -1;
     if (a.type !== 'dir' && b.type === 'dir') return 1;
     switch (sortVal) {
@@ -748,10 +923,16 @@ function setupDropzone(config) {
 
   dz.addEventListener('dragleave', () => dz.classList.remove('active'));
 
-  dz.addEventListener('drop', (e) => {
+  dz.addEventListener('drop', async (e) => {
     e.preventDefault();
     dz.classList.remove('active');
-    stageFiles(e.dataTransfer.files);
+    const items = e.dataTransfer.items;
+    if (items && items[0]?.webkitGetAsEntry) {
+      const files = await getFilesFromDrop(items);
+      stageFiles(files);
+    } else {
+      stageFiles(e.dataTransfer.files);
+    }
   });
 
   dz.addEventListener('click', () => $('#file-input').click());
@@ -773,6 +954,12 @@ async function stageFiles(fileList) {
   for (const file of files) {
     const isDuplicate = stagedFiles.some((s) => s.file.name === file.name && s.file.size === file.size);
     if (isDuplicate) continue;
+
+    // Warn if file already exists in repo
+    const existsInRepo = currentFiles.some((f) => f.name === file.name);
+    if (existsInRepo) {
+      showToast(`${file.name} already exists — will overwrite`, 'error');
+    }
 
     const result = await compressImage(file);
     stagedFiles.push({
@@ -880,6 +1067,17 @@ async function commitStagedFiles(message) {
     return;
   }
 
+  // Check storage limit
+  try {
+    const info = await getRepoInfo(config.owner, config.repo);
+    const currentBytes = info.size * 1024;
+    const uploadBytes = stagedFiles.reduce((sum, s) => sum + s.file.size, 0);
+    if (currentBytes + uploadBytes > STORAGE_LIMIT) {
+      showToast(`Upload would exceed 1 GB storage limit (${formatSize(currentBytes)} used + ${formatSize(uploadBytes)} new)`, 'error');
+      return;
+    }
+  } catch { /* continue anyway */ }
+
   const files = [...stagedFiles];
   const defaultMsg = files.length === 1
     ? `Upload ${files[0].file.name}`
@@ -953,6 +1151,36 @@ function setupClipboardPaste() {
       showToast(`Pasted ${files.length} file${files.length > 1 ? 's' : ''} to staging`);
     }
   });
+}
+
+async function getFilesFromDrop(dataTransferItems) {
+  const files = [];
+
+  async function readEntry(entry, path = '') {
+    if (entry.isFile) {
+      const file = await new Promise((resolve) => entry.file(resolve));
+      // Preserve relative path from folder
+      const relativePath = path ? `${path}/${file.name}` : file.name;
+      const namedFile = new File([file], relativePath, { type: file.type });
+      files.push(namedFile);
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      const entries = await new Promise((resolve) => reader.readEntries(resolve));
+      for (const child of entries) {
+        await readEntry(child, path ? `${path}/${entry.name}` : entry.name);
+      }
+    }
+  }
+
+  const entries = [];
+  for (const item of dataTransferItems) {
+    const entry = item.webkitGetAsEntry();
+    if (entry) entries.push(entry);
+  }
+  for (const entry of entries) {
+    await readEntry(entry);
+  }
+  return files;
 }
 
 function fileToBase64(file) {
@@ -1189,20 +1417,28 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// ── Repo Size ──
+// ── Storage Bar ──
+
+const STORAGE_LIMIT = 1024 * 1024 * 1024; // 1 GB
 
 async function loadRepoSize(config) {
   try {
     const info = await getRepoInfo(config.owner, config.repo);
-    const sizeEl = $('#repo-size');
-    if (sizeEl) {
-      const sizeKB = info.size;
-      sizeEl.textContent = formatSize(sizeKB * 1024);
-      // Warn if approaching limit
-      if (sizeKB > 5 * 1024 * 1024) { // > 5 GB
-        sizeEl.classList.add('repo-size-warn');
-      }
-    }
+    const sizeBytes = info.size * 1024; // API returns KB
+    const pct = Math.min((sizeBytes / STORAGE_LIMIT) * 100, 100);
+
+    const fill = $('#storage-fill');
+    const label = $('#storage-label');
+    const bar = $('#storage-bar');
+    if (!fill || !label || !bar) return;
+
+    fill.style.width = `${pct}%`;
+    label.textContent = `${formatSize(sizeBytes)} / 1 GB`;
+
+    bar.classList.remove('storage-ok', 'storage-warn', 'storage-danger');
+    if (pct > 90) bar.classList.add('storage-danger');
+    else if (pct > 70) bar.classList.add('storage-warn');
+    else bar.classList.add('storage-ok');
   } catch { /* ignore */ }
 }
 

@@ -1,4 +1,4 @@
-import { listRepos } from './github.js?v=7';
+import { listRepos } from './github.js?v=8';
 
 const CONFIG_KEY = 'gitassets_config';
 const REPOS_KEY = 'gitassets_repos';
@@ -66,6 +66,27 @@ export async function autoDetectRepo(username) {
   }
 
   return null;
+}
+
+// ── Favorites ──
+const FAVS_KEY = 'gitassets_favorites';
+
+export function getFavorites() {
+  const stored = localStorage.getItem(FAVS_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+
+export function toggleFavorite(path) {
+  const favs = getFavorites();
+  const idx = favs.indexOf(path);
+  if (idx >= 0) favs.splice(idx, 1);
+  else favs.push(path);
+  localStorage.setItem(FAVS_KEY, JSON.stringify(favs));
+  return idx < 0; // returns true if added
+}
+
+export function isFavorite(path) {
+  return getFavorites().includes(path);
 }
 
 export function getRepoList(repos) {
