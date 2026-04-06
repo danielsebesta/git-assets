@@ -1,7 +1,7 @@
-import { isLoggedIn, handleAuthCallback, getToken } from './auth.js?v=3';
-import { getUser } from './github.js?v=3';
-import { getConfig } from './config.js?v=3';
-import { renderLogin, renderSetup, renderDashboard, renderHeader, showToast } from './ui.js?v=3';
+import { isLoggedIn, handleAuthCallback, getToken } from './auth.js?v=4';
+import { getUser } from './github.js?v=4';
+import { getConfig } from './config.js?v=4';
+import { renderLogin, renderSetup, renderDashboard, renderHeader, showToast } from './ui.js?v=4';
 
 async function init() {
   try {

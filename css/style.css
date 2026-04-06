@@ -350,6 +350,9 @@ body {
 
 .cdn-menu-item:hover { background: rgba(255, 255, 255, 0.06); }
 
+.repo-menu { min-width: 200px; }
+.repo-menu-active { color: var(--primary); font-weight: 500; }
+
 /* ── Toast ── */
 .toast {
   position: fixed;

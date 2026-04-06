@@ -1,6 +1,7 @@
-import { listRepos } from './github.js?v=3';
+import { listRepos } from './github.js?v=4';
 
 const CONFIG_KEY = 'gitassets_config';
+const REPOS_KEY = 'gitassets_repos';
 export const ASSETS_ROOT = '_assets';
 
 export function getConfig() {
@@ -11,10 +12,30 @@ export function getConfig() {
 
 export function saveConfig(config) {
   localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+  addSavedRepo(config);
 }
 
 export function clearConfig() {
   localStorage.removeItem(CONFIG_KEY);
+}
+
+export function getSavedRepos() {
+  const stored = localStorage.getItem(REPOS_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+
+export function addSavedRepo(config) {
+  const repos = getSavedRepos();
+  const key = `${config.owner}/${config.repo}`;
+  if (!repos.find((r) => `${r.owner}/${r.repo}` === key)) {
+    repos.push(config);
+    localStorage.setItem(REPOS_KEY, JSON.stringify(repos));
+  }
+}
+
+export function removeSavedRepo(owner, repo) {
+  const repos = getSavedRepos().filter((r) => !(r.owner === owner && r.repo === repo));
+  localStorage.setItem(REPOS_KEY, JSON.stringify(repos));
 }
 
 export async function autoDetectRepo(username) {

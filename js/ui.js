@@ -1,6 +1,6 @@
-import { login, logout, getToken } from './auth.js?v=3';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=3';
-import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT } from './config.js?v=3';
+import { login, logout, getToken } from './auth.js?v=4';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=4';
+import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos } from './config.js?v=4';
 
 const GITHUB_ICON = `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>`;
 
@@ -412,11 +412,70 @@ function fileToBase64(file) {
 
 function setupChangeRepo() {
   $('#change-repo-btn').addEventListener('click', () => {
-    clearConfig();
-    currentPath = ASSETS_ROOT;
-    allRepos = null;
-    renderSetup();
+    showRepoSwitcher();
   });
+}
+
+function showRepoSwitcher() {
+  document.querySelectorAll('.cdn-menu').forEach((m) => m.remove());
+
+  const config = getConfig();
+  const saved = getSavedRepos();
+  const menu = document.createElement('div');
+  menu.className = 'cdn-menu repo-menu';
+
+  const currentKey = config ? `${config.owner}/${config.repo}` : '';
+
+  let html = saved
+    .map((r) => {
+      const key = `${r.owner}/${r.repo}`;
+      const active = key === currentKey ? ' repo-menu-active' : '';
+      return `<button class="cdn-menu-item${active}" data-owner="${r.owner}" data-repo="${r.repo}" data-branch="${r.branch}">${key}</button>`;
+    })
+    .join('');
+
+  html += `<div style="border-top:1px solid var(--border);margin:4px 0;"></div>`;
+  html += `<button class="cdn-menu-item" data-action="add-new">+ Add repository</button>`;
+
+  menu.innerHTML = html;
+
+  const btn = $('#change-repo-btn');
+  const rect = btn.getBoundingClientRect();
+  menu.style.top = `${rect.bottom + 4}px`;
+  menu.style.right = `${window.innerWidth - rect.right}px`;
+  document.body.appendChild(menu);
+
+  menu.querySelectorAll('.cdn-menu-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.remove();
+
+      if (item.dataset.action === 'add-new') {
+        clearConfig();
+        currentPath = ASSETS_ROOT;
+        allRepos = null;
+        renderSetup();
+        return;
+      }
+
+      const newConfig = {
+        owner: item.dataset.owner,
+        repo: item.dataset.repo,
+        branch: item.dataset.branch,
+      };
+      saveConfig(newConfig);
+      currentPath = ASSETS_ROOT;
+      renderDashboard();
+    });
+  });
+
+  const close = (e) => {
+    if (!menu.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener('click', close);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', close), 0);
 }
 
 // ── History ──
