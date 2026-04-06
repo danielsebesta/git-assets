@@ -1,5 +1,5 @@
 const TOKEN_KEY = 'gitassets_token';
-const WORKER_URL = 'https://git-assets-auth.dany-sebesta415.workers.dev';
+const WORKER_URL = 'https://auth-git-assets.sebesta.dev';
 
 export function login() {
   window.location.href = `${WORKER_URL}/login`;
