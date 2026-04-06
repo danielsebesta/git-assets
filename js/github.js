@@ -1,4 +1,4 @@
-import { getToken } from './auth.js?v=4';
+import { getToken } from './auth.js?v=5';
 
 const API = 'https://api.github.com';
 
@@ -114,6 +114,18 @@ export const CDN_PROVIDERS = [
       `https://cdn.statically.io/gh/${owner}/${repo}/${branch}/${path}`,
   },
 ];
+
+export async function renameFile(owner, repo, oldPath, newPath, message) {
+  // GitHub API has no rename — fetch content, create at new path, delete old
+  const res = await fetch(`${API}/repos/${owner}/${repo}/contents/${oldPath}`, {
+    headers: headers(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch file for rename');
+  const data = await res.json();
+
+  await uploadFile(owner, repo, newPath, data.content.replace(/\n/g, ''), message || `Rename ${oldPath} to ${newPath}`);
+  await deleteFile(owner, repo, oldPath, data.sha, message || `Rename ${oldPath} to ${newPath}`);
+}
 
 export async function getCommits(owner, repo, path, page = 1) {
   const params = new URLSearchParams({ path, per_page: '30', page: String(page) });
