@@ -1,4 +1,4 @@
-import { getToken } from './auth.js?v=2';
+import { getToken } from './auth.js?v=3';
 
 const API = 'https://api.github.com';
 
@@ -114,6 +114,27 @@ export const CDN_PROVIDERS = [
       `https://cdn.statically.io/gh/${owner}/${repo}/${branch}/${path}`,
   },
 ];
+
+export async function getCommits(owner, repo, path, page = 1) {
+  const params = new URLSearchParams({ path, per_page: '30', page: String(page) });
+  const res = await fetch(`${API}/repos/${owner}/${repo}/commits?${params}`, {
+    headers: headers(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch history');
+  return res.json();
+}
+
+export async function getCommitDetail(owner, repo, sha) {
+  const res = await fetch(`${API}/repos/${owner}/${repo}/commits/${sha}`, {
+    headers: headers(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch commit');
+  return res.json();
+}
+
+export function getRawUrlAtCommit(owner, repo, sha, path) {
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${sha}/${path}`;
+}
 
 export function getCdnUrl(owner, repo, branch, path) {
   return CDN_PROVIDERS[0].url(owner, repo, branch, path);

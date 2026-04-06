@@ -1,6 +1,6 @@
-import { login, logout, getToken } from './auth.js?v=2';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, getCdnUrl, getRawUrl, CDN_PROVIDERS } from './github.js?v=2';
-import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT } from './config.js?v=2';
+import { login, logout, getToken } from './auth.js?v=3';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=3';
+import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT } from './config.js?v=3';
 
 const GITHUB_ICON = `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>`;
 
@@ -119,6 +119,7 @@ export async function renderDashboard() {
         <div class="breadcrumbs" id="breadcrumbs"></div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn btn-sm" id="change-repo-btn" title="Change repository">${config.owner}/${config.repo}</button>
+          <button class="btn btn-sm" id="history-btn">History</button>
           <button class="btn btn-primary btn-sm" id="upload-btn">Upload</button>
         </div>
       </div>
@@ -141,6 +142,7 @@ export async function renderDashboard() {
   setupDropzone(config);
   setupUploadButton(config);
   setupChangeRepo();
+  setupHistoryButton(config);
   await loadFiles(config);
 }
 
@@ -415,6 +417,159 @@ function setupChangeRepo() {
     allRepos = null;
     renderSetup();
   });
+}
+
+// ── History ──
+
+function setupHistoryButton(config) {
+  $('#history-btn').addEventListener('click', () => showHistory(config));
+}
+
+async function showHistory(config) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal history-modal">
+      <div class="history-header">
+        <h3>Asset History</h3>
+        <button class="btn-icon history-close">&times;</button>
+      </div>
+      <div class="history-content">
+        <div style="text-align:center;padding:40px;"><span class="spinner"></span></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('.history-close').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  try {
+    const commits = await getCommits(config.owner, config.repo, currentPath);
+    const content = overlay.querySelector('.history-content');
+
+    if (commits.length === 0) {
+      content.innerHTML = `<div class="empty-state"><p>No history for this path.</p></div>`;
+      return;
+    }
+
+    content.innerHTML = `<div class="history-timeline" id="history-timeline"></div>
+      <button class="btn btn-sm history-load-more" id="history-more" style="display:none;margin-top:12px;width:100%;">Load more</button>`;
+
+    let page = 1;
+    renderCommits(commits, config, overlay);
+
+    const moreBtn = overlay.querySelector('#history-more');
+    if (commits.length === 30) moreBtn.style.display = 'block';
+
+    moreBtn.addEventListener('click', async () => {
+      page++;
+      moreBtn.textContent = 'Loading...';
+      try {
+        const more = await getCommits(config.owner, config.repo, currentPath, page);
+        renderCommits(more, config, overlay);
+        if (more.length < 30) moreBtn.style.display = 'none';
+        else moreBtn.textContent = 'Load more';
+      } catch (err) {
+        showToast(err.message, 'error');
+        moreBtn.textContent = 'Load more';
+      }
+    });
+  } catch (err) {
+    overlay.querySelector('.history-content').innerHTML =
+      `<div class="empty-state"><p style="color:var(--danger);">Error: ${err.message}</p></div>`;
+  }
+}
+
+async function renderCommits(commits, config, overlay) {
+  const timeline = overlay.querySelector('#history-timeline');
+
+  for (const commit of commits) {
+    const date = new Date(commit.commit.author.date);
+    const timeStr = date.toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    const entry = document.createElement('div');
+    entry.className = 'history-entry';
+    entry.innerHTML = `
+      <div class="history-meta">
+        <span class="history-date">${timeStr}</span>
+        <span class="history-author">${commit.commit.author.name}</span>
+      </div>
+      <div class="history-message">${escapeHtml(commit.commit.message)}</div>
+      <div class="history-files" data-sha="${commit.sha}">
+        <button class="btn btn-sm history-expand">Show files</button>
+      </div>
+    `;
+
+    const filesDiv = entry.querySelector('.history-files');
+    const expandBtn = entry.querySelector('.history-expand');
+
+    expandBtn.addEventListener('click', async () => {
+      if (expandBtn.dataset.loaded) {
+        const list = filesDiv.querySelector('.history-file-list');
+        list.style.display = list.style.display === 'none' ? 'block' : 'none';
+        expandBtn.textContent = list.style.display === 'none' ? 'Show files' : 'Hide files';
+        return;
+      }
+
+      expandBtn.textContent = 'Loading...';
+      try {
+        const detail = await getCommitDetail(config.owner, config.repo, commit.sha);
+        const assetFiles = detail.files.filter((f) => f.filename.startsWith(currentPath));
+
+        if (assetFiles.length === 0) {
+          expandBtn.textContent = 'No asset changes';
+          return;
+        }
+
+        const list = document.createElement('div');
+        list.className = 'history-file-list';
+
+        for (const file of assetFiles) {
+          const isImage = /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.filename);
+          const statusClass = file.status === 'removed' ? 'deleted' : file.status === 'added' ? 'added' : 'modified';
+          const statusLabel = file.status === 'removed' ? 'deleted' : file.status;
+
+          const item = document.createElement('div');
+          item.className = `history-file ${statusClass}`;
+
+          let thumbHtml = '';
+          if (isImage) {
+            const imgUrl = file.status === 'removed'
+              ? getRawUrlAtCommit(config.owner, config.repo, detail.parents[0]?.sha || commit.sha, file.filename)
+              : getRawUrlAtCommit(config.owner, config.repo, commit.sha, file.filename);
+            thumbHtml = `<img class="history-thumb" src="${imgUrl}" alt="${file.filename}" loading="lazy" />`;
+          }
+
+          item.innerHTML = `
+            ${thumbHtml}
+            <div class="history-file-info">
+              <span class="history-filename">${file.filename.split('/').pop()}</span>
+              <span class="history-status history-status-${statusClass}">${statusLabel}</span>
+            </div>
+          `;
+          list.appendChild(item);
+        }
+
+        filesDiv.appendChild(list);
+        expandBtn.textContent = 'Hide files';
+        expandBtn.dataset.loaded = 'true';
+      } catch (err) {
+        expandBtn.textContent = 'Failed to load';
+      }
+    });
+
+    timeline.appendChild(entry);
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 // ── Helpers ──
