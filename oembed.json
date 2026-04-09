@@ -2,8 +2,5 @@
   "version": "1.0",
   "type": "link",
   "title": "GitAssets — Upload to GitHub, get CDN links",
-  "author_name": "Daniel Šebesta",
-  "author_url": "https://sebesta.dev",
-  "provider_name": "GitAssets",
-  "provider_url": "https://git-assets.sebesta.dev"
+  "provider_name": "GitAssets"
 }

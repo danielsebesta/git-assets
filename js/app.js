@@ -1,3 +1,4 @@
+import { WORKER_URL } from './env.js';
 import { isLoggedIn, handleAuthCallback, getToken } from './auth.js?v=13';
 import { getUser } from './github.js?v=13';
 import { getConfig } from './config.js?v=13';
@@ -11,8 +12,8 @@ async function init() {
   }
 
   if (!isLoggedIn()) {
-    // Not logged in — redirect to landing page
-    window.location.replace('/');
+    // Not logged in — go straight to GitHub login
+    window.location.replace(`${WORKER_URL}/login`);
     return;
   }
 

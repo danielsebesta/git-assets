@@ -1,8 +1,9 @@
+import { WORKER_URL } from './env.js';
+
 const TOKEN_KEY = 'gitassets_token';
 const TOKEN_TS_KEY = 'gitassets_token_ts';
 const TOKEN_EXP_KEY = 'gitassets_token_exp';
 const REFRESH_KEY = 'gitassets_refresh_token';
-const WORKER_URL = 'https://auth-git-assets.sebesta.dev';
 
 // Refresh 5 minutes before expiry
 const REFRESH_BUFFER = 5 * 60 * 1000;
