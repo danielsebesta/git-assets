@@ -186,22 +186,30 @@ export async function renderSetup() {
     const list = $('#repo-list');
     pushable.slice(0, 50).forEach((r) => {
       const li = document.createElement('li');
-      li.className = 'setup-repo-item';
+      li.className = `setup-repo-item${r.isPrivate ? ' setup-repo-disabled' : ''}`;
+
+      const meta = [];
+      if (r.language) meta.push(r.language);
+      if (r.stars > 0) meta.push(`${r.stars} stars`);
+      if (r.sizeKB > 0) {
+        const size = r.sizeKB >= 1024 ? `${(r.sizeKB / 1024).toFixed(1)} MB` : `${r.sizeKB} KB`;
+        meta.push(size);
+      }
+
       li.innerHTML = `
         <img class="setup-repo-avatar" src="${r.avatarUrl}&s=40" alt="" width="20" height="20" loading="lazy" />
         <div class="setup-repo-info">
-          <span class="setup-repo-name">${r.fullName}${r.isPrivate ? '<span class="setup-repo-badge private">Private</span>' : '<span class="setup-repo-badge public">Public</span>'}</span>
-          ${r.description ? `<span class="setup-repo-desc">${r.description.length > 80 ? r.description.slice(0, 80) + '…' : r.description}</span>` : ''}
+          <span class="setup-repo-name">${r.fullName}</span>
+          ${r.description ? `<span class="setup-repo-desc">${r.description.length > 80 ? r.description.slice(0, 80) + '...' : r.description}</span>` : ''}
+          ${meta.length ? `<span class="setup-repo-meta">${meta.join(' &middot; ')}</span>` : ''}
         </div>
       `;
-      li.addEventListener('click', () => {
-        if (r.isPrivate) {
-          showToast('Private repos won\'t work for CDN — jsDelivr can only serve public files.', 'error');
-          return;
-        }
-        saveConfig({ owner: r.owner, repo: r.repo, branch: r.branch });
-        renderDashboard();
-      });
+      if (!r.isPrivate) {
+        li.addEventListener('click', () => {
+          saveConfig({ owner: r.owner, repo: r.repo, branch: r.branch });
+          renderDashboard();
+        });
+      }
       list.appendChild(li);
     });
 

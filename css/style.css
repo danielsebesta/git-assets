@@ -262,24 +262,15 @@ body {
   white-space: nowrap;
 }
 
-.setup-repo-badge {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
+.setup-repo-meta {
+  font-size: 11px;
+  color: var(--text-faint);
 }
 
-.setup-repo-badge.public {
-  background: rgba(46, 160, 67, 0.15);
-  color: #3fb950;
-}
-
-.setup-repo-badge.private {
-  background: rgba(210, 153, 34, 0.15);
-  color: #d29922;
+.setup-repo-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .setup-repo-item:hover { border-color: var(--text-muted); }

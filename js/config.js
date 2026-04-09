@@ -83,8 +83,8 @@ export function getRecent() {
 }
 
 export function getRepoList(repos) {
-  return repos
-    .filter((r) => r.permissions?.push)
+  const list = repos
+    .filter((r) => r.permissions?.push && !r.archived)
     .map((r) => ({
       owner: r.owner.login,
       repo: r.name,
@@ -93,5 +93,12 @@ export function getRepoList(repos) {
       avatarUrl: r.owner.avatar_url,
       description: r.description || '',
       isPrivate: r.private,
+      language: r.language || '',
+      stars: r.stargazers_count || 0,
+      updatedAt: r.updated_at,
+      sizeKB: r.size || 0,
     }));
+  // Public first, private last
+  list.sort((a, b) => a.isPrivate - b.isPrivate);
+  return list;
 }
