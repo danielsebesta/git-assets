@@ -349,7 +349,7 @@ function createFileCard(file, config, index) {
   card.className = 'file-card';
   if (isSelected(file.path)) card.classList.add('selected');
 
-  const isImage = /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
+  const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
   const isDir = file.type === 'dir';
 
   if (!isDir) card.dataset.path = file.path;
@@ -508,7 +508,7 @@ function showContextMenu(x, y, file, config) {
 
   const sel = getSelected();
   const multi = sel.size > 1;
-  const isImage = /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
+  const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
 
   const items = [
     { label: multi ? `Copy ${sel.size} URLs (jsDelivr)` : 'Copy jsDelivr URL', action: 'copy-jsdelivr' },
@@ -587,7 +587,7 @@ function handleContextAction(action, file, config) {
       const html = paths.map((p) => {
         const url = getCdnUrl(config.owner, config.repo, config.branch, p);
         const name = p.split('/').pop();
-        return /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(name)
+        return /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(name)
           ? `<img src="${url}" alt="${name}" />`
           : `<a href="${url}">${name}</a>`;
       }).join('\n');
@@ -599,7 +599,7 @@ function handleContextAction(action, file, config) {
       const md = paths.map((p) => {
         const url = getCdnUrl(config.owner, config.repo, config.branch, p);
         const name = p.split('/').pop();
-        return /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(name)
+        return /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(name)
           ? `![${name}](${url})`
           : `[${name}](${url})`;
       }).join('\n');
@@ -648,7 +648,7 @@ function handleContextAction(action, file, config) {
 }
 
 function showUrlPanel(file, config) {
-  const isImage = /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
+  const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
@@ -1623,7 +1623,7 @@ async function renderCommits(commits, config, overlay) {
         list.className = 'history-file-list';
 
         for (const file of assetFiles) {
-          const isImage = /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.filename);
+          const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.filename);
           const statusClass = file.status === 'removed' ? 'deleted' : file.status === 'added' ? 'added' : 'modified';
           const statusLabel = file.status === 'removed' ? 'deleted' : file.status;
 
@@ -1850,7 +1850,7 @@ function renderRecentUploads(config) {
     </div>
     <div class="recent-list">${recent.map((r) => {
       const name = r.path.split('/').pop();
-      const isImage = /\.(jpe?g|png|gif|webp|svg|ico|bmp|avif)$/i.test(name);
+      const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(name);
       const url = getCdnUrl(r.owner, r.repo, r.branch, r.path);
       const thumb = isImage ? getRawUrl(r.owner, r.repo, r.branch, r.path) : '';
       const ago = timeAgo(r.time);
