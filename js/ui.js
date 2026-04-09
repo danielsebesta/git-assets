@@ -1,8 +1,8 @@
-import { login, logout, getToken } from './auth.js?v=11';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=11';
-import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=11';
-import { compressImage, compressPreview, getSupportedFormats, FORMATS } from './compress.js?v=11';
-import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=11';
+import { login, logout, getToken } from './auth.js?v=13';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, createRepo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=13';
+import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=13';
+import { compressImage, compressPreview, getSupportedFormats, FORMATS } from './compress.js?v=13';
+import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=13';
 
 // ── Logo ──
 const LOGO_SVG = `<svg viewBox="0 0 131.914 132.292" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M34.381 178.86c-2.113-.309-3.476-.715-4.92-1.466-3.455-1.797-5.949-4.92-7.035-8.807l-.308-1.105-.03-33.825c-.028-30-.011-33.942.148-34.86.842-4.883 4.434-9.04 9.18-10.627 2.004-.67 1.487-.644 13.717-.69 7.906-.03 11.62-.004 12.426.088a13.6 13.6 0 0 1 7.955 3.762c1.13 1.101 1.904 2.109 2.558 3.327.69 1.286.917 1.926 1.52 4.29l.547 2.14 2.615-2.953c1.438-1.625 3.849-4.352 5.357-6.062l2.743-3.109-.22-.702c-.946-3.043-.173-6.715 1.934-9.18 1.365-1.598 3.022-2.629 5.182-3.224.573-.157 1.125-.199 2.427-.182.927.012 1.83.038 2.005.057.291.033.946-.673 7.297-7.864 4.908-5.557 6.955-7.953 6.902-8.079-.238-.563-.527-1.938-.589-2.804-.173-2.425.684-5.038 2.274-6.931 1.214-1.445 2.589-2.383 4.463-3.043 1.181-.417 1.195-.418 3.105-.414 1.78.004 1.989.028 2.906.33 3.566 1.172 6.115 4.028 6.79 7.611 1.069 5.661-2.896 10.988-8.664 11.642-1.203.136-2.722 0-3.817-.34l-.713-.222-6.488 7.342c-3.569 4.038-6.448 7.358-6.397 7.377.05.02 2.2-.098 4.779-.261 2.578-.164 8.924-.56 14.103-.88 15.323-.947 16.958-1.051 16.976-1.078.009-.014.22-.417.47-.897.613-1.176 2.412-2.99 3.651-3.684 2.723-1.522 5.942-1.72 8.777-.536 1.043.435 2.493 1.445 3.275 2.28 1.807 1.932 2.705 4.18 2.71 6.786.007 4.47-2.808 8.22-7.148 9.519-.9.27-1.265.315-2.615.323-1.82.011-2.645-.16-4.167-.865-1.817-.843-3.454-2.288-4.319-3.812a24 24 0 0 0-.528-.899c-.11-.162-1.851-.074-17.204.874-19.353 1.196-18.535 1.136-18.535 1.346 0 .363-1.212 2.509-1.844 3.267-1.238 1.483-3.13 2.675-5.079 3.2-1.663.448-4.332.312-5.873-.3-.137-.054-1.443 1.354-5.034 5.425l-4.85 5.497 16.775.062c15.166.055 16.87.08 17.776.26 2.783.549 5.25 1.854 7.193 3.803 2.2 2.21 3.579 5.011 3.946 8.023.1.813.125 7.47.097 25.282l-.039 24.178-.275 1.046c-.662 2.514-1.741 4.505-3.394 6.26-1.982 2.104-4.195 3.358-7.253 4.112-.76.187-3.282.201-38.881.217-20.938.009-38.2-.002-38.36-.025m76.376-9.53c.917-.434 1.484-.913 1.951-1.647.772-1.214.722.635.689-25.606l-.03-23.77-.38-.771c-.481-.977-1.493-1.943-2.435-2.323l-.672-.272H72.392c-35.777 0-37.515.01-38.086.21a4.74 4.74 0 0 0-2.852 2.725l-.27.669-.033 23.306c-.023 16.43.004 23.526.094 24.05.306 1.794 1.705 3.33 3.401 3.736.206.049 17.244.081 37.862.072l37.488-.018zM32.52 106.154c1.574-.403 3.278-.45 16.42-.452 8.76-.002 12.873-.04 12.873-.122 0-.36-1.45-5.843-1.679-6.345-.513-1.129-1.601-2.053-2.847-2.417-.556-.163-1.904-.185-11.4-.185-9.556 0-10.838.022-11.399.187-1.7.504-2.915 1.852-3.236 3.588-.07.377-.127 1.911-.127 3.41v2.723l.262-.082c.144-.044.654-.182 1.133-.305" transform="translate(-22.077 -46.596)"/></svg>`;
@@ -171,9 +171,15 @@ export async function renderSetup() {
       <h2>Pick a repository</h2>
       <p>Choose any repo to store your assets, or enter one manually.</p>
       <ul class="setup-repo-list" id="repo-list"></ul>
+      <div class="setup-divider"><span>or</span></div>
+      <div class="setup-create">
+        <input type="text" id="create-repo-name" placeholder="New repo name (e.g. my-assets)" />
+        <button class="btn btn-primary btn-sm" id="create-repo-btn">Create</button>
+      </div>
+      <div class="setup-divider"><span>or</span></div>
       <div class="setup-manual">
         <input type="text" id="manual-repo" placeholder="owner/repo (e.g. myname/my-assets)" />
-        <button class="btn btn-primary btn-sm" id="manual-btn">Use</button>
+        <button class="btn btn-sm" id="manual-btn">Use existing</button>
       </div>
     `;
 
@@ -181,8 +187,18 @@ export async function renderSetup() {
     pushable.slice(0, 50).forEach((r) => {
       const li = document.createElement('li');
       li.className = 'setup-repo-item';
-      li.textContent = r.fullName;
+      li.innerHTML = `
+        <img class="setup-repo-avatar" src="${r.avatarUrl}&s=40" alt="" width="20" height="20" loading="lazy" />
+        <div class="setup-repo-info">
+          <span class="setup-repo-name">${r.fullName}${r.isPrivate ? '<span class="setup-repo-badge private">Private</span>' : '<span class="setup-repo-badge public">Public</span>'}</span>
+          ${r.description ? `<span class="setup-repo-desc">${r.description.length > 80 ? r.description.slice(0, 80) + '…' : r.description}</span>` : ''}
+        </div>
+      `;
       li.addEventListener('click', () => {
+        if (r.isPrivate) {
+          showToast('Private repos won\'t work for CDN — jsDelivr can only serve public files.', 'error');
+          return;
+        }
         saveConfig({ owner: r.owner, repo: r.repo, branch: r.branch });
         renderDashboard();
       });
@@ -201,6 +217,12 @@ export async function renderSetup() {
       btn.textContent = 'Checking...';
       try {
         const info = await getRepoInfo(parts[0], parts[1]);
+        if (info.private) {
+          showToast('This repo is private — jsDelivr CDN can only serve files from public repos.', 'error');
+          btn.disabled = false;
+          btn.textContent = 'Use';
+          return;
+        }
         saveConfig({ owner: parts[0], repo: parts[1], branch: info.default_branch || 'main' });
         renderDashboard();
       } catch {
@@ -212,6 +234,35 @@ export async function renderSetup() {
 
     $('#manual-repo').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') $('#manual-btn').click();
+    });
+
+    $('#create-repo-btn').addEventListener('click', async () => {
+      const name = $('#create-repo-name').value.trim();
+      if (!name) {
+        showToast('Enter a repository name', 'error');
+        return;
+      }
+      if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
+        showToast('Repo name can only contain letters, numbers, hyphens, dots, and underscores', 'error');
+        return;
+      }
+      const btn = $('#create-repo-btn');
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+      try {
+        const repo = await createRepo(name, 'Assets hosted via GitAssets');
+        saveConfig({ owner: repo.owner.login, repo: repo.name, branch: repo.default_branch || 'main' });
+        showToast(`Repository ${repo.full_name} created!`, 'success');
+        renderDashboard();
+      } catch (err) {
+        showToast(err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Create';
+      }
+    });
+
+    $('#create-repo-name').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') $('#create-repo-btn').click();
     });
   } catch (err) {
     showToast(err.message, 'error');

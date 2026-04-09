@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#000000" />
+  <title>GitAssets</title>
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="GitAssets" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.bunny.net" crossorigin />
+  <link href="https://fonts.bunny.net/css?family=mona-sans:400,500,600,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css?v=13" />
+  <script>
+    // Apply saved theme immediately to prevent flash
+    var t = localStorage.getItem('gitassets_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    document.querySelector('meta[name="theme-color"]').content = t === 'dark' ? '#000000' : '#ffffff';
+  </script>
+</head>
+<body>
+  <div class="landing" id="landing" style="display:none;"></div>
+  <header class="header" id="header" style="display:none;"></header>
+  <main id="app" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 61px);">
+      <span class="spinner"></span>
+    </div>
+  </main>
+  <script type="module" src="/js/app.js?v=13"></script>
+</body>
+</html>

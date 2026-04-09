@@ -1,4 +1,4 @@
-import { listRepos } from './github.js?v=10';
+import { listRepos } from './github.js?v=13';
 
 const CONFIG_KEY = 'gitassets_config';
 const REPOS_KEY = 'gitassets_repos';
@@ -90,5 +90,8 @@ export function getRepoList(repos) {
       repo: r.name,
       branch: r.default_branch,
       fullName: r.full_name,
+      avatarUrl: r.owner.avatar_url,
+      description: r.description || '',
+      isPrivate: r.private,
     }));
 }

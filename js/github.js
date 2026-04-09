@@ -1,4 +1,4 @@
-import { getToken, logout, needsRefresh, refreshToken } from './auth.js?v=10';
+import { getToken, logout, needsRefresh, refreshToken } from './auth.js?v=13';
 
 const API = 'https://api.github.com';
 
@@ -68,6 +68,23 @@ export async function listRepos() {
 export async function getRepoInfo(owner, repo) {
   const res = await apiFetch(`${API}/repos/${owner}/${repo}`);
   if (!res.ok) throw new Error('Failed to fetch repo info');
+  return res.json();
+}
+
+export async function createRepo(name, description = '') {
+  const res = await apiFetch(`${API}/user/repos`, {
+    method: 'POST',
+    body: JSON.stringify({
+      name,
+      description,
+      private: false,
+      auto_init: true,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to create repository');
+  }
   return res.json();
 }
 

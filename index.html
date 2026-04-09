@@ -14,110 +14,192 @@
   <meta name="apple-mobile-web-app-title" content="GitAssets" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="preconnect" href="https://fonts.bunny.net" crossorigin />
-  <link href="https://fonts.bunny.net/css?family=mona-sans:400,500,600,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=11" />
-  <script>if(localStorage.getItem('gitassets_token')){document.documentElement.classList.add('has-token')}</script>
-  <style>.has-token #landing{display:none}.has-token #app{display:block!important}</style>
+  <link href="https://fonts.bunny.net/css?family=mona-sans:400,500,600,700,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css?v=13" />
+  <link rel="stylesheet" href="/css/landing.css?v=13" />
+  <script>
+    if (localStorage.getItem('gitassets_token')) {
+      window.location.replace('/app');
+    }
+  </script>
 </head>
 <body>
-  <header class="header" id="header" style="display:none">
-    <a class="header-logo" href="#">GitAssets</a>
-    <div></div>
-  </header>
-
-  <!-- Landing page (static HTML, hidden by JS when logged in) -->
   <div class="landing" id="landing">
+
+    <!-- ── Nav ── -->
     <nav class="landing-nav">
-      <a class="landing-nav-logo" href="#"><svg viewBox="0 0 131.914 132.292" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M34.381 178.86c-2.113-.309-3.476-.715-4.92-1.466-3.455-1.797-5.949-4.92-7.035-8.807l-.308-1.105-.03-33.825c-.028-30-.011-33.942.148-34.86.842-4.883 4.434-9.04 9.18-10.627 2.004-.67 1.487-.644 13.717-.69 7.906-.03 11.62-.004 12.426.088a13.6 13.6 0 0 1 7.955 3.762c1.13 1.101 1.904 2.109 2.558 3.327.69 1.286.917 1.926 1.52 4.29l.547 2.14 2.615-2.953c1.438-1.625 3.849-4.352 5.357-6.062l2.743-3.109-.22-.702c-.946-3.043-.173-6.715 1.934-9.18 1.365-1.598 3.022-2.629 5.182-3.224.573-.157 1.125-.199 2.427-.182.927.012 1.83.038 2.005.057.291.033.946-.673 7.297-7.864 4.908-5.557 6.955-7.953 6.902-8.079-.238-.563-.527-1.938-.589-2.804-.173-2.425.684-5.038 2.274-6.931 1.214-1.445 2.589-2.383 4.463-3.043 1.181-.417 1.195-.418 3.105-.414 1.78.004 1.989.028 2.906.33 3.566 1.172 6.115 4.028 6.79 7.611 1.069 5.661-2.896 10.988-8.664 11.642-1.203.136-2.722 0-3.817-.34l-.713-.222-6.488 7.342c-3.569 4.038-6.448 7.358-6.397 7.377.05.02 2.2-.098 4.779-.261 2.578-.164 8.924-.56 14.103-.88 15.323-.947 16.958-1.051 16.976-1.078.009-.014.22-.417.47-.897.613-1.176 2.412-2.99 3.651-3.684 2.723-1.522 5.942-1.72 8.777-.536 1.043.435 2.493 1.445 3.275 2.28 1.807 1.932 2.705 4.18 2.71 6.786.007 4.47-2.808 8.22-7.148 9.519-.9.27-1.265.315-2.615.323-1.82.011-2.645-.16-4.167-.865-1.817-.843-3.454-2.288-4.319-3.812a24 24 0 0 0-.528-.899c-.11-.162-1.851-.074-17.204.874-19.353 1.196-18.535 1.136-18.535 1.346 0 .363-1.212 2.509-1.844 3.267-1.238 1.483-3.13 2.675-5.079 3.2-1.663.448-4.332.312-5.873-.3-.137-.054-1.443 1.354-5.034 5.425l-4.85 5.497 16.775.062c15.166.055 16.87.08 17.776.26 2.783.549 5.25 1.854 7.193 3.803 2.2 2.21 3.579 5.011 3.946 8.023.1.813.125 7.47.097 25.282l-.039 24.178-.275 1.046c-.662 2.514-1.741 4.505-3.394 6.26-1.982 2.104-4.195 3.358-7.253 4.112-.76.187-3.282.201-38.881.217-20.938.009-38.2-.002-38.36-.025m76.376-9.53c.917-.434 1.484-.913 1.951-1.647.772-1.214.722.635.689-25.606l-.03-23.77-.38-.771c-.481-.977-1.493-1.943-2.435-2.323l-.672-.272H72.392c-35.777 0-37.515.01-38.086.21a4.74 4.74 0 0 0-2.852 2.725l-.27.669-.033 23.306c-.023 16.43.004 23.526.094 24.05.306 1.794 1.705 3.33 3.401 3.736.206.049 17.244.081 37.862.072l37.488-.018zM32.52 106.154c1.574-.403 3.278-.45 16.42-.452 8.76-.002 12.873-.04 12.873-.122 0-.36-1.45-5.843-1.679-6.345-.513-1.129-1.601-2.053-2.847-2.417-.556-.163-1.904-.185-11.4-.185-9.556 0-10.838.022-11.399.187-1.7.504-2.915 1.852-3.236 3.588-.07.377-.127 1.911-.127 3.41v2.723l.262-.082c.144-.044.654-.182 1.133-.305" transform="translate(-22.077 -46.596)"/></svg> GitAssets</a>
+      <a class="landing-nav-logo" href="/">
+        <svg viewBox="0 0 131.914 132.292" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M34.381 178.86c-2.113-.309-3.476-.715-4.92-1.466-3.455-1.797-5.949-4.92-7.035-8.807l-.308-1.105-.03-33.825c-.028-30-.011-33.942.148-34.86.842-4.883 4.434-9.04 9.18-10.627 2.004-.67 1.487-.644 13.717-.69 7.906-.03 11.62-.004 12.426.088a13.6 13.6 0 0 1 7.955 3.762c1.13 1.101 1.904 2.109 2.558 3.327.69 1.286.917 1.926 1.52 4.29l.547 2.14 2.615-2.953c1.438-1.625 3.849-4.352 5.357-6.062l2.743-3.109-.22-.702c-.946-3.043-.173-6.715 1.934-9.18 1.365-1.598 3.022-2.629 5.182-3.224.573-.157 1.125-.199 2.427-.182.927.012 1.83.038 2.005.057.291.033.946-.673 7.297-7.864 4.908-5.557 6.955-7.953 6.902-8.079-.238-.563-.527-1.938-.589-2.804-.173-2.425.684-5.038 2.274-6.931 1.214-1.445 2.589-2.383 4.463-3.043 1.181-.417 1.195-.418 3.105-.414 1.78.004 1.989.028 2.906.33 3.566 1.172 6.115 4.028 6.79 7.611 1.069 5.661-2.896 10.988-8.664 11.642-1.203.136-2.722 0-3.817-.34l-.713-.222-6.488 7.342c-3.569 4.038-6.448 7.358-6.397 7.377.05.02 2.2-.098 4.779-.261 2.578-.164 8.924-.56 14.103-.88 15.323-.947 16.958-1.051 16.976-1.078.009-.014.22-.417.47-.897.613-1.176 2.412-2.99 3.651-3.684 2.723-1.522 5.942-1.72 8.777-.536 1.043.435 2.493 1.445 3.275 2.28 1.807 1.932 2.705 4.18 2.71 6.786.007 4.47-2.808 8.22-7.148 9.519-.9.27-1.265.315-2.615.323-1.82.011-2.645-.16-4.167-.865-1.817-.843-3.454-2.288-4.319-3.812a24 24 0 0 0-.528-.899c-.11-.162-1.851-.074-17.204.874-19.353 1.196-18.535 1.136-18.535 1.346 0 .363-1.212 2.509-1.844 3.267-1.238 1.483-3.13 2.675-5.079 3.2-1.663.448-4.332.312-5.873-.3-.137-.054-1.443 1.354-5.034 5.425l-4.85 5.497 16.775.062c15.166.055 16.87.08 17.776.26 2.783.549 5.25 1.854 7.193 3.803 2.2 2.21 3.579 5.011 3.946 8.023.1.813.125 7.47.097 25.282l-.039 24.178-.275 1.046c-.662 2.514-1.741 4.505-3.394 6.26-1.982 2.104-4.195 3.358-7.253 4.112-.76.187-3.282.201-38.881.217-20.938.009-38.2-.002-38.36-.025m76.376-9.53c.917-.434 1.484-.913 1.951-1.647.772-1.214.722.635.689-25.606l-.03-23.77-.38-.771c-.481-.977-1.493-1.943-2.435-2.323l-.672-.272H72.392c-35.777 0-37.515.01-38.086.21a4.74 4.74 0 0 0-2.852 2.725l-.27.669-.033 23.306c-.023 16.43.004 23.526.094 24.05.306 1.794 1.705 3.33 3.401 3.736.206.049 17.244.081 37.862.072l37.488-.018zM32.52 106.154c1.574-.403 3.278-.45 16.42-.452 8.76-.002 12.873-.04 12.873-.122 0-.36-1.45-5.843-1.679-6.345-.513-1.129-1.601-2.053-2.847-2.417-.556-.163-1.904-.185-11.4-.185-9.556 0-10.838.022-11.399.187-1.7.504-2.915 1.852-3.236 3.588-.07.377-.127 1.911-.127 3.41v2.723l.262-.082c.144-.044.654-.182 1.133-.305" transform="translate(-22.077 -46.596)"/></svg>
+        GitAssets
+      </a>
       <div class="landing-nav-right">
         <a href="https://github.com/danielsebesta/git-assets" class="landing-nav-link" target="_blank" rel="noopener">GitHub</a>
         <button class="btn btn-sm btn-icon" id="landing-theme-btn" title="Toggle theme" aria-label="Toggle theme">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
-        <button class="btn-cta btn-cta-sm" id="login-btn-top">
+        <a class="btn-cta btn-cta-sm" href="/app" id="login-btn-top">
           <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
           Connect GitHub
-        </button>
+        </a>
       </div>
     </nav>
 
-    <section class="landing-hero">
-      <div class="landing-hero-badge">Free &amp; open source</div>
-      <h1 class="landing-hero-title">Upload to GitHub.<br><span class="landing-hero-accent">Get CDN links instantly.</span></h1>
-      <p class="landing-hero-sub">Upload images and static files to a public GitHub repository.<br>Get instant CDN links for your blog, docs, or app.</p>
-      <div class="landing-hero-actions">
-        <button class="btn-cta" id="login-btn">
-          <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-          Connect GitHub
-        </button>
+    <!-- ── Hero ── -->
+    <section class="hero">
+      <div class="hero-glow"></div>
+      <div class="hero-content">
+        <div class="hero-icon anim-fade-in">
+          <svg viewBox="0 0 131.914 132.292" width="120" height="120" fill="currentColor" aria-hidden="true"><path d="M34.381 178.86c-2.113-.309-3.476-.715-4.92-1.466-3.455-1.797-5.949-4.92-7.035-8.807l-.308-1.105-.03-33.825c-.028-30-.011-33.942.148-34.86.842-4.883 4.434-9.04 9.18-10.627 2.004-.67 1.487-.644 13.717-.69 7.906-.03 11.62-.004 12.426.088a13.6 13.6 0 0 1 7.955 3.762c1.13 1.101 1.904 2.109 2.558 3.327.69 1.286.917 1.926 1.52 4.29l.547 2.14 2.615-2.953c1.438-1.625 3.849-4.352 5.357-6.062l2.743-3.109-.22-.702c-.946-3.043-.173-6.715 1.934-9.18 1.365-1.598 3.022-2.629 5.182-3.224.573-.157 1.125-.199 2.427-.182.927.012 1.83.038 2.005.057.291.033.946-.673 7.297-7.864 4.908-5.557 6.955-7.953 6.902-8.079-.238-.563-.527-1.938-.589-2.804-.173-2.425.684-5.038 2.274-6.931 1.214-1.445 2.589-2.383 4.463-3.043 1.181-.417 1.195-.418 3.105-.414 1.78.004 1.989.028 2.906.33 3.566 1.172 6.115 4.028 6.79 7.611 1.069 5.661-2.896 10.988-8.664 11.642-1.203.136-2.722 0-3.817-.34l-.713-.222-6.488 7.342c-3.569 4.038-6.448 7.358-6.397 7.377.05.02 2.2-.098 4.779-.261 2.578-.164 8.924-.56 14.103-.88 15.323-.947 16.958-1.051 16.976-1.078.009-.014.22-.417.47-.897.613-1.176 2.412-2.99 3.651-3.684 2.723-1.522 5.942-1.72 8.777-.536 1.043.435 2.493 1.445 3.275 2.28 1.807 1.932 2.705 4.18 2.71 6.786.007 4.47-2.808 8.22-7.148 9.519-.9.27-1.265.315-2.615.323-1.82.011-2.645-.16-4.167-.865-1.817-.843-3.454-2.288-4.319-3.812a24 24 0 0 0-.528-.899c-.11-.162-1.851-.074-17.204.874-19.353 1.196-18.535 1.136-18.535 1.346 0 .363-1.212 2.509-1.844 3.267-1.238 1.483-3.13 2.675-5.079 3.2-1.663.448-4.332.312-5.873-.3-.137-.054-1.443 1.354-5.034 5.425l-4.85 5.497 16.775.062c15.166.055 16.87.08 17.776.26 2.783.549 5.25 1.854 7.193 3.803 2.2 2.21 3.579 5.011 3.946 8.023.1.813.125 7.47.097 25.282l-.039 24.178-.275 1.046c-.662 2.514-1.741 4.505-3.394 6.26-1.982 2.104-4.195 3.358-7.253 4.112-.76.187-3.282.201-38.881.217-20.938.009-38.2-.002-38.36-.025m76.376-9.53c.917-.434 1.484-.913 1.951-1.647.772-1.214.722.635.689-25.606l-.03-23.77-.38-.771c-.481-.977-1.493-1.943-2.435-2.323l-.672-.272H72.392c-35.777 0-37.515.01-38.086.21a4.74 4.74 0 0 0-2.852 2.725l-.27.669-.033 23.306c-.023 16.43.004 23.526.094 24.05.306 1.794 1.705 3.33 3.401 3.736.206.049 17.244.081 37.862.072l37.488-.018zM32.52 106.154c1.574-.403 3.278-.45 16.42-.452 8.76-.002 12.873-.04 12.873-.122 0-.36-1.45-5.843-1.679-6.345-.513-1.129-1.601-2.053-2.847-2.417-.556-.163-1.904-.185-11.4-.185-9.556 0-10.838.022-11.399.187-1.7.504-2.915 1.852-3.236 3.588-.07.377-.127 1.911-.127 3.41v2.723l.262-.082c.144-.044.654-.182 1.133-.305" transform="translate(-22.077 -46.596)"/></svg>
+        </div>
+        <h1 class="hero-title anim-fade-in anim-d1">
+          Upload to GitHub.<br>
+          <span class="hero-title-accent">Get CDN links instantly.</span>
+        </h1>
+        <p class="hero-sub anim-fade-in anim-d2">
+          Turn any public GitHub repository into a fast, global CDN<br class="hide-mobile">
+          for images and static assets. No servers, no config, no cost.
+        </p>
+        <div class="hero-actions anim-fade-in anim-d3">
+          <a class="hero-cta" href="/app" id="login-btn">
+            <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+            Connect GitHub
+          </a>
+          <a class="hero-cta-secondary" href="https://github.com/danielsebesta/git-assets" target="_blank" rel="noopener">
+            View source
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          </a>
+        </div>
+        <p class="hero-note anim-fade-in anim-d4">Works with public GitHub repositories</p>
       </div>
-      <p class="landing-hero-note">Built for public GitHub repositories.</p>
+
     </section>
 
-    <section class="landing-section">
-      <h2 class="landing-section-title">From repo to CDN in three steps</h2>
-      <div class="landing-steps">
-        <div class="landing-step">
-          <div class="landing-step-num">1</div>
-          <h3>Connect</h3>
-          <p>Connect GitHub and choose a public repository for your assets.</p>
+    <!-- ── How it works ── -->
+    <section class="section" id="how">
+      <div class="section-inner">
+        <div class="section-header">
+          <span class="section-label">How it works</span>
+          <h2 class="section-title">Three steps. Zero config.</h2>
         </div>
-        <div class="landing-step">
-          <div class="landing-step-num">2</div>
-          <h3>Upload</h3>
-          <p>Drag &amp; drop files, paste from clipboard, or upload entire folders. Images auto-compress to WebP.</p>
+        <div class="steps">
+          <div class="step anim-slide-up">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            </div>
+            <div class="step-num">01</div>
+            <h3>Connect your GitHub</h3>
+            <p>One-click login. Pick any public repo you can push to — or create a new one just for assets.</p>
+          </div>
+          <div class="step-connector"><svg viewBox="0 0 40 24" width="40" height="24" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.3"><line x1="0" y1="12" x2="40" y2="12"/></svg></div>
+          <div class="step anim-slide-up anim-d1">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="step-num">02</div>
+            <h3>Upload your files</h3>
+            <p>Drag &amp; drop, paste from clipboard, or upload entire folders. Images auto-compress to your chosen format.</p>
+          </div>
+          <div class="step-connector"><svg viewBox="0 0 40 24" width="40" height="24" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.3"><line x1="0" y1="12" x2="40" y2="12"/></svg></div>
+          <div class="step anim-slide-up anim-d2">
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <div class="step-num">03</div>
+            <h3>Copy CDN links</h3>
+            <p>Get ready-to-use URLs, HTML snippets, or Markdown — served from jsDelivr's global edge network.</p>
+          </div>
         </div>
-        <div class="landing-step">
-          <div class="landing-step-num">3</div>
-          <h3>Use</h3>
-          <p>Copy a ready-to-use CDN link, HTML tag, or Markdown snippet.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="landing-section">
-      <h2 class="landing-section-title">Built for developers</h2>
-      <div class="landing-features">
-        <div class="landing-feature">
-          <div class="landing-feature-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-          <h3>Instant CDN</h3>
-          <p>Files served via jsDelivr with edge caching worldwide. Copy-ready URLs, HTML, and Markdown snippets.</p>
-        </div>
-        <div class="landing-feature">
-          <div class="landing-feature-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
-          <h3>Batch upload</h3>
-          <p>Upload multiple files as a single Git commit. Drag entire folders. Paste screenshots with Ctrl+V.</p>
-        </div>
-        <div class="landing-feature">
-          <div class="landing-feature-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
-          <h3>Auto optimization</h3>
-          <p>Images automatically compress to WebP before upload — smaller files, faster loads, zero effort.</p>
-        </div>
-        <div class="landing-feature">
-          <div class="landing-feature-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-          <h3>Your repo, your data</h3>
-          <p>Files live in your own GitHub repository. No vendor lock-in, no third-party storage. Full Git history.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="landing-section landing-selfhost">
-      <div class="landing-selfhost-inner">
-        <h2 class="landing-section-title">Self-host option</h2>
-        <p>GitAssets is open source under the MIT license. Fork it and run your own instance on GitHub Pages, with a small Cloudflare Worker for auth.</p>
-        <a href="https://github.com/danielsebesta/git-assets" class="btn-cta btn-cta-outline" target="_blank" rel="noopener">
-          <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-          View on GitHub
-        </a>
       </div>
     </section>
 
+    <!-- ── Features ── -->
+    <section class="section section-alt" id="features">
+      <div class="section-inner">
+        <div class="section-header">
+          <span class="section-label">Features</span>
+          <h2 class="section-title">Everything you need.<br>Nothing you don't.</h2>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <h3>Global edge delivery</h3>
+            <p>Files served via jsDelivr CDN with 800+ PoPs. Fast loads everywhere, no infrastructure to manage.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <h3>Smart compression</h3>
+            <p>Compare before &amp; after with a live slider. Choose WebP, AVIF, JPEG, or PNG. Tune quality to the byte.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            </div>
+            <h3>Batch operations</h3>
+            <p>Upload dozens of files in a single Git commit. Drag entire folders. Rename, move, and delete in bulk.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h3>Full version history</h3>
+            <p>Every upload is a Git commit. Browse file history, compare versions, restore anything — it's just Git.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3>Your data, your repo</h3>
+            <p>Files stored in your own GitHub repository. No vendor lock-in, no third-party storage, full transparency.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+            </div>
+            <h3>Rich file previews</h3>
+            <p>Preview images, videos, audio, PDFs, and code files inline. No download needed, no context switching.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Open source ── -->
+    <section class="section" id="oss">
+      <div class="section-inner section-narrow" style="text-align:center;">
+        <div class="oss-icon">
+          <svg viewBox="0 0 16 16" width="40" height="40" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+        </div>
+        <h2 class="section-title" style="margin-top:24px;">Open source. Self-hostable.</h2>
+        <p class="section-desc" style="max-width:480px;margin:16px auto 32px;">
+          MIT licensed. Fork the repo, deploy to GitHub Pages, and bring your own Cloudflare Worker for auth. Full control, zero cost.
+        </p>
+        <div class="oss-actions">
+          <a class="hero-cta" href="/app">
+            <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+            Get started free
+          </a>
+          <a class="hero-cta-secondary" href="https://github.com/danielsebesta/git-assets" target="_blank" rel="noopener">
+            Star on GitHub
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Footer ── -->
     <footer class="landing-footer">
-      <span>GitAssets</span>
-      <span class="landing-footer-sep">&middot;</span>
-      <a href="https://github.com/danielsebesta/git-assets" target="_blank" rel="noopener">GitHub</a>
-      <span class="landing-footer-sep">&middot;</span>
-      <span>MIT License</span>
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <svg viewBox="0 0 131.914 132.292" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M34.381 178.86c-2.113-.309-3.476-.715-4.92-1.466-3.455-1.797-5.949-4.92-7.035-8.807l-.308-1.105-.03-33.825c-.028-30-.011-33.942.148-34.86.842-4.883 4.434-9.04 9.18-10.627 2.004-.67 1.487-.644 13.717-.69 7.906-.03 11.62-.004 12.426.088a13.6 13.6 0 0 1 7.955 3.762c1.13 1.101 1.904 2.109 2.558 3.327.69 1.286.917 1.926 1.52 4.29l.547 2.14 2.615-2.953c1.438-1.625 3.849-4.352 5.357-6.062l2.743-3.109-.22-.702c-.946-3.043-.173-6.715 1.934-9.18 1.365-1.598 3.022-2.629 5.182-3.224.573-.157 1.125-.199 2.427-.182.927.012 1.83.038 2.005.057.291.033.946-.673 7.297-7.864 4.908-5.557 6.955-7.953 6.902-8.079-.238-.563-.527-1.938-.589-2.804-.173-2.425.684-5.038 2.274-6.931 1.214-1.445 2.589-2.383 4.463-3.043 1.181-.417 1.195-.418 3.105-.414 1.78.004 1.989.028 2.906.33 3.566 1.172 6.115 4.028 6.79 7.611 1.069 5.661-2.896 10.988-8.664 11.642-1.203.136-2.722 0-3.817-.34l-.713-.222-6.488 7.342c-3.569 4.038-6.448 7.358-6.397 7.377.05.02 2.2-.098 4.779-.261 2.578-.164 8.924-.56 14.103-.88 15.323-.947 16.958-1.051 16.976-1.078.009-.014.22-.417.47-.897.613-1.176 2.412-2.99 3.651-3.684 2.723-1.522 5.942-1.72 8.777-.536 1.043.435 2.493 1.445 3.275 2.28 1.807 1.932 2.705 4.18 2.71 6.786.007 4.47-2.808 8.22-7.148 9.519-.9.27-1.265.315-2.615.323-1.82.011-2.645-.16-4.167-.865-1.817-.843-3.454-2.288-4.319-3.812a24 24 0 0 0-.528-.899c-.11-.162-1.851-.074-17.204.874-19.353 1.196-18.535 1.136-18.535 1.346 0 .363-1.212 2.509-1.844 3.267-1.238 1.483-3.13 2.675-5.079 3.2-1.663.448-4.332.312-5.873-.3-.137-.054-1.443 1.354-5.034 5.425l-4.85 5.497 16.775.062c15.166.055 16.87.08 17.776.26 2.783.549 5.25 1.854 7.193 3.803 2.2 2.21 3.579 5.011 3.946 8.023.1.813.125 7.47.097 25.282l-.039 24.178-.275 1.046c-.662 2.514-1.741 4.505-3.394 6.26-1.982 2.104-4.195 3.358-7.253 4.112-.76.187-3.282.201-38.881.217-20.938.009-38.2-.002-38.36-.025m76.376-9.53c.917-.434 1.484-.913 1.951-1.647.772-1.214.722.635.689-25.606l-.03-23.77-.38-.771c-.481-.977-1.493-1.943-2.435-2.323l-.672-.272H72.392c-35.777 0-37.515.01-38.086.21a4.74 4.74 0 0 0-2.852 2.725l-.27.669-.033 23.306c-.023 16.43.004 23.526.094 24.05.306 1.794 1.705 3.33 3.401 3.736.206.049 17.244.081 37.862.072l37.488-.018zM32.52 106.154c1.574-.403 3.278-.45 16.42-.452 8.76-.002 12.873-.04 12.873-.122 0-.36-1.45-5.843-1.679-6.345-.513-1.129-1.601-2.053-2.847-2.417-.556-.163-1.904-.185-11.4-.185-9.556 0-10.838.022-11.399.187-1.7.504-2.915 1.852-3.236 3.588-.07.377-.127 1.911-.127 3.41v2.723l.262-.082c.144-.044.654-.182 1.133-.305" transform="translate(-22.077 -46.596)"/></svg>
+          GitAssets
+        </div>
+        <div class="footer-links">
+          <span>Made by <a href="https://sebesta.dev" target="_blank" rel="noopener">Daniel &Scaron;ebesta</a></span>
+        </div>
+      </div>
     </footer>
   </div>
 
@@ -127,9 +209,41 @@
       <p>GitAssets needs JavaScript to connect to GitHub and manage your files.</p>
     </div>
   </noscript>
-  <main id="app" style="display:none">
-    <div style="text-align:center;padding:80px;" role="status" aria-label="Loading"><span class="spinner"></span></div>
-  </main>
-  <script type="module" src="js/app.js?v=11"></script>
+
+  <script>
+    // Theme toggle
+    (function() {
+      var btn = document.getElementById('landing-theme-btn');
+      if (!btn) return;
+      var sunSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+      var moonSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+      var theme = localStorage.getItem('gitassets_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      btn.innerHTML = theme === 'dark' ? sunSvg : moonSvg;
+      btn.addEventListener('click', function() {
+        theme = theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('gitassets_theme', theme);
+        btn.innerHTML = theme === 'dark' ? sunSvg : moonSvg;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.content = theme === 'dark' ? '#000000' : '#ffffff';
+      });
+    })();
+
+    // Intersection Observer for scroll animations
+    (function() {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('anim-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+      document.querySelectorAll('.anim-slide-up, .feature-card, .usecase-card').forEach(function(el) {
+        observer.observe(el);
+      });
+    })();
+  </script>
 </body>
 </html>

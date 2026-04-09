@@ -1,7 +1,7 @@
-import { isLoggedIn, handleAuthCallback, getToken } from './auth.js?v=11';
-import { getUser } from './github.js?v=11';
-import { getConfig } from './config.js?v=11';
-import { renderLogin, renderSetup, renderDashboard, renderHeader, showToast } from './ui.js?v=11';
+import { isLoggedIn, handleAuthCallback, getToken } from './auth.js?v=13';
+import { getUser } from './github.js?v=13';
+import { getConfig } from './config.js?v=13';
+import { renderLogin, renderSetup, renderDashboard, renderHeader, showToast } from './ui.js?v=13';
 
 async function init() {
   try {
@@ -11,8 +11,8 @@ async function init() {
   }
 
   if (!isLoggedIn()) {
-    renderHeader(null);
-    renderLogin();
+    // Not logged in — redirect to landing page
+    window.location.replace('/');
     return;
   }
 
@@ -27,8 +27,7 @@ async function init() {
     }
   } catch (err) {
     showToast('Session expired. Please log in again.', 'error');
-    renderHeader(null);
-    renderLogin();
+    window.location.replace('/');
   }
 }
 
