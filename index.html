@@ -16,15 +16,14 @@
   <link rel="preconnect" href="https://fonts.bunny.net" crossorigin />
   <link href="https://fonts.bunny.net/css?family=mona-sans:400,500,600,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css?v=11" />
+  <script>if(localStorage.getItem('gitassets_token')){document.documentElement.classList.add('has-token')}</script>
+  <style>.has-token #landing{display:none}.has-token #app{display:block!important}</style>
 </head>
 <body>
   <header class="header" id="header" style="display:none">
     <a class="header-logo" href="#">GitAssets</a>
     <div></div>
   </header>
-
-  <!-- Hide landing instantly if user has a token (avoid flash) -->
-  <script>if(localStorage.getItem('gitassets_token')){document.write('<style>#landing{display:none}#app{display:block!important}</style>')}</script>
 
   <!-- Landing page (static HTML, hidden by JS when logged in) -->
   <div class="landing" id="landing">
