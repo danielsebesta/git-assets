@@ -7,22 +7,18 @@
   <meta name="theme-color" content="#000000" />
   <title>GitAssets — Upload to GitHub, get CDN links</title>
   <meta name="description" content="Turn any public GitHub repository into a free, global CDN for images and static assets. Upload files, get instant jsDelivr CDN links. No servers, no config, no cost." />
-  <link rel="canonical" id="meta-canonical" href="/" />
-
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" id="meta-og-url" content="/" />
   <meta property="og:title" content="GitAssets — Upload to GitHub, get CDN links" />
   <meta property="og:description" content="Turn any public GitHub repository into a free, global CDN for images and static assets. No servers, no config, no cost." />
-  <meta property="og:image" id="meta-og-image" content="/web-app-manifest-512x512.png" />
+  <meta property="og:image" content="/web-app-manifest-512x512.png" />
   <meta property="og:site_name" content="GitAssets" />
-  <meta property="og:locale" content="en_US" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="GitAssets — Upload to GitHub, get CDN links" />
   <meta name="twitter:description" content="Turn any public GitHub repository into a free, global CDN for images and static assets. No servers, no config, no cost." />
-  <meta name="twitter:image" id="meta-tw-image" content="/web-app-manifest-512x512.png" />
+  <meta name="twitter:image" content="/web-app-manifest-512x512.png" />
 
   <!-- Additional meta -->
   <meta name="author" content="Daniel Šebesta" />
@@ -30,7 +26,7 @@
   <meta name="robots" content="index, follow" />
 
   <!-- oEmbed -->
-  <link rel="alternate" type="application/json+oembed" id="meta-oembed" href="/oembed.json" title="GitAssets" />
+  <link rel="alternate" type="application/json+oembed" href="/oembed.json" title="GitAssets" />
 
   <!-- Icons & Manifest -->
   <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -237,17 +233,10 @@
   </noscript>
 
   <script type="module">
-    // Set login links and meta URLs from env config
-    import { WORKER_URL, SITE_URL } from '/js/env.js';
-    var origin = SITE_URL || window.location.origin;
+    import { WORKER_URL } from '/js/env.js';
     document.querySelectorAll('[data-login-link]').forEach(function(a) {
       a.href = WORKER_URL + '/login';
     });
-    var c = document.getElementById('meta-canonical'); if (c) c.href = origin + '/';
-    var ou = document.getElementById('meta-og-url'); if (ou) ou.content = origin + '/';
-    var oi = document.getElementById('meta-og-image'); if (oi) oi.content = origin + '/web-app-manifest-512x512.png';
-    var ti = document.getElementById('meta-tw-image'); if (ti) ti.content = origin + '/web-app-manifest-512x512.png';
-    var oe = document.getElementById('meta-oembed'); if (oe) oe.href = origin + '/oembed.json';
   </script>
 
   <script>
