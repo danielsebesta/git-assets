@@ -398,7 +398,8 @@ body {
   z-index: 1000;
 }
 
-.file-thumb {
+.file-thumb,
+video.file-thumb {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
@@ -831,6 +832,22 @@ body {
   border-radius: var(--radius);
   background: var(--bg);
   margin-bottom: 16px;
+}
+
+.url-panel-text-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 8px 0 16px;
+  max-height: 240px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-muted);
 }
 
 .url-panel-list {

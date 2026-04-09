@@ -26,7 +26,42 @@ const ICONS = {
   link: icon('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>', 14),
   trash: icon('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>', 14),
   x: icon('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>', 18),
+  video: icon('<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>', 20),
+  audio: icon('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', 20),
+  code: icon('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>', 20),
+  text: icon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>', 20),
 };
+
+// ── File Type Detection ──
+const IMG_RE = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif|apng)$/i;
+const VIDEO_RE = /\.(mp4|webm|ogv|ogg|mov)$/i;
+const AUDIO_RE = /\.(mp3|wav|ogg|flac|aac|m4a|opus)$/i;
+const TEXT_RE = /\.(txt|md|csv|json|xml|yaml|yml|html|htm|css|js|ts|jsx|tsx|svg)$/i;
+const PDF_RE = /\.pdf$/i;
+
+function getFileType(name) {
+  if (IMG_RE.test(name)) return 'image';
+  if (VIDEO_RE.test(name)) return 'video';
+  if (AUDIO_RE.test(name)) return 'audio';
+  if (TEXT_RE.test(name)) return 'text';
+  if (PDF_RE.test(name)) return 'pdf';
+  return 'other';
+}
+
+function getFileIcon(type) {
+  switch (type) {
+    case 'image': return ICONS.image;
+    case 'video': return ICONS.video;
+    case 'audio': return ICONS.audio;
+    case 'text': return ICONS.text;
+    case 'pdf': return ICONS.text;
+    default: return ICONS.file;
+  }
+}
+
+function isPreviewable(type) {
+  return type !== 'other';
+}
 
 // ── Focus Trap ──
 function trapFocus(overlay) {
@@ -349,7 +384,7 @@ function createFileCard(file, config, index) {
   card.className = 'file-card';
   if (isSelected(file.path)) card.classList.add('selected');
 
-  const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
+  const fileType = getFileType(file.name);
   const isDir = file.type === 'dir';
 
   if (!isDir) card.dataset.path = file.path;
@@ -357,11 +392,14 @@ function createFileCard(file, config, index) {
   let thumbHtml;
   if (isDir) {
     thumbHtml = `<div class="file-thumb-placeholder"><span class="folder-icon">${ICONS.folder}</span></div>`;
-  } else if (isImage) {
+  } else if (fileType === 'image') {
     const thumbUrl = getRawUrl(config.owner, config.repo, config.branch, file.path);
     thumbHtml = `<img class="file-thumb" src="${thumbUrl}" alt="${file.name}" loading="lazy" /><div class="hover-preview"><img src="${thumbUrl}" alt="${file.name}" /></div>`;
+  } else if (fileType === 'video') {
+    const thumbUrl = getRawUrl(config.owner, config.repo, config.branch, file.path);
+    thumbHtml = `<video class="file-thumb" src="${thumbUrl}" muted preload="metadata"></video>`;
   } else {
-    thumbHtml = `<div class="file-thumb-placeholder">${ICONS.file}</div>`;
+    thumbHtml = `<div class="file-thumb-placeholder">${getFileIcon(fileType)}</div>`;
   }
 
   const sizeText = file.size ? formatSize(file.size) : '';
@@ -369,7 +407,7 @@ function createFileCard(file, config, index) {
   card.innerHTML = `
     ${thumbHtml}
     <div class="file-info">
-      <div class="file-name" title="${file.name}">${isFavorite(file.path) ? '<span class="pin-icon">${ICONS.pin}</span> ' : ''}${file.name}</div>
+      <div class="file-name" title="${file.name}">${isFavorite(file.path) ? `<span class="pin-icon">${ICONS.pin}</span> ` : ''}${file.name}</div>
       ${sizeText ? `<div class="file-size">${sizeText}</div>` : ''}
     </div>
     ${!isDir ? `
@@ -508,7 +546,7 @@ function showContextMenu(x, y, file, config) {
 
   const sel = getSelected();
   const multi = sel.size > 1;
-  const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
+  const ctxFileType = getFileType(file.name);
 
   const items = [
     { label: multi ? `Copy ${sel.size} URLs (jsDelivr)` : 'Copy jsDelivr URL', action: 'copy-jsdelivr' },
@@ -587,9 +625,11 @@ function handleContextAction(action, file, config) {
       const html = paths.map((p) => {
         const url = getCdnUrl(config.owner, config.repo, config.branch, p);
         const name = p.split('/').pop();
-        return /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(name)
-          ? `<img src="${url}" alt="${name}" />`
-          : `<a href="${url}">${name}</a>`;
+        const t = getFileType(name);
+        if (t === 'image') return `<img src="${url}" alt="${name}" />`;
+        if (t === 'video') return `<video src="${url}" controls></video>`;
+        if (t === 'audio') return `<audio src="${url}" controls></audio>`;
+        return `<a href="${url}">${name}</a>`;
       }).join('\n');
       copyToClipboard(html);
       showToast('HTML copied');
@@ -599,7 +639,7 @@ function handleContextAction(action, file, config) {
       const md = paths.map((p) => {
         const url = getCdnUrl(config.owner, config.repo, config.branch, p);
         const name = p.split('/').pop();
-        return /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(name)
+        return getFileType(name) === 'image'
           ? `![${name}](${url})`
           : `[${name}](${url})`;
       }).join('\n');
@@ -648,7 +688,7 @@ function handleContextAction(action, file, config) {
 }
 
 function showUrlPanel(file, config) {
-  const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.name);
+  const fileType = getFileType(file.name);
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
@@ -658,9 +698,36 @@ function showUrlPanel(file, config) {
   }));
 
   const primaryUrl = urls[0].url;
+  const rawUrl = urls[1].url;
   const safeName = escapeHtml(file.name);
-  const htmlSnippet = isImage ? `<img src="${primaryUrl}" alt="${safeName}" />` : `<a href="${primaryUrl}">${safeName}</a>`;
-  const mdSnippet = isImage ? `![${safeName}](${primaryUrl})` : `[${safeName}](${primaryUrl})`;
+
+  let htmlSnippet, mdSnippet;
+  if (fileType === 'image') {
+    htmlSnippet = `<img src="${primaryUrl}" alt="${safeName}" />`;
+    mdSnippet = `![${safeName}](${primaryUrl})`;
+  } else if (fileType === 'video') {
+    htmlSnippet = `<video src="${primaryUrl}" controls></video>`;
+    mdSnippet = `[${safeName}](${primaryUrl})`;
+  } else if (fileType === 'audio') {
+    htmlSnippet = `<audio src="${primaryUrl}" controls></audio>`;
+    mdSnippet = `[${safeName}](${primaryUrl})`;
+  } else {
+    htmlSnippet = `<a href="${primaryUrl}">${safeName}</a>`;
+    mdSnippet = `[${safeName}](${primaryUrl})`;
+  }
+
+  let previewHtml = '';
+  if (fileType === 'image') {
+    previewHtml = `<img class="url-panel-preview" src="${rawUrl}" alt="${file.name}" />`;
+  } else if (fileType === 'video') {
+    previewHtml = `<video class="url-panel-preview" src="${rawUrl}" controls muted style="max-height:240px;width:100%;border-radius:var(--radius);"></video>`;
+  } else if (fileType === 'audio') {
+    previewHtml = `<audio src="${rawUrl}" controls style="width:100%;margin:8px 0;"></audio>`;
+  } else if (fileType === 'pdf') {
+    previewHtml = `<iframe src="${rawUrl}" style="width:100%;height:300px;border:1px solid var(--border);border-radius:var(--radius);margin:8px 0;"></iframe>`;
+  } else if (fileType === 'text') {
+    previewHtml = `<pre class="url-panel-text-preview" id="text-preview-content"><span class="spinner"></span></pre>`;
+  }
 
   const altUrls = urls.slice(1);
 
@@ -670,7 +737,7 @@ function showUrlPanel(file, config) {
         <h3>${file.name}</h3>
         <button class="btn-icon history-close">${ICONS.x}</button>
       </div>
-      ${isImage ? `<img class="url-panel-preview" src="${urls[1].url}" alt="${file.name}" />` : ''}
+      ${previewHtml}
       <div class="url-panel-list">
         <div class="url-panel-item">
           <span class="url-panel-label">${urls[0].name} (recommended)</span>
@@ -721,6 +788,14 @@ function showUrlPanel(file, config) {
       setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
     });
   });
+
+  // Load text preview
+  if (fileType === 'text') {
+    const pre = overlay.querySelector('#text-preview-content');
+    fetch(rawUrl).then((r) => r.text()).then((text) => {
+      pre.textContent = text.length > 5000 ? text.slice(0, 5000) + '\n...' : text;
+    }).catch(() => { pre.textContent = 'Failed to load preview'; });
+  }
 }
 
 function startRename(nameEl, file, config) {
@@ -1623,7 +1698,7 @@ async function renderCommits(commits, config, overlay) {
         list.className = 'history-file-list';
 
         for (const file of assetFiles) {
-          const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(file.filename);
+          const histFileType = getFileType(file.filename);
           const statusClass = file.status === 'removed' ? 'deleted' : file.status === 'added' ? 'added' : 'modified';
           const statusLabel = file.status === 'removed' ? 'deleted' : file.status;
 
@@ -1631,7 +1706,7 @@ async function renderCommits(commits, config, overlay) {
           item.className = `history-file ${statusClass}`;
 
           let thumbHtml = '';
-          if (isImage) {
+          if (histFileType === 'image') {
             const imgUrl = file.status === 'removed'
               ? getRawUrlAtCommit(config.owner, config.repo, detail.parents[0]?.sha || commit.sha, file.filename)
               : getRawUrlAtCommit(config.owner, config.repo, commit.sha, file.filename);
@@ -1850,12 +1925,12 @@ function renderRecentUploads(config) {
     </div>
     <div class="recent-list">${recent.map((r) => {
       const name = r.path.split('/').pop();
-      const isImage = /\.(jpe?g|jfif|png|gif|webp|svg|ico|bmp|avif)$/i.test(name);
+      const rType = getFileType(name);
       const url = getCdnUrl(r.owner, r.repo, r.branch, r.path);
-      const thumb = isImage ? getRawUrl(r.owner, r.repo, r.branch, r.path) : '';
+      const thumb = rType === 'image' ? getRawUrl(r.owner, r.repo, r.branch, r.path) : '';
       const ago = timeAgo(r.time);
       return `<div class="recent-item" data-url="${url}" title="${r.path}">
-        ${thumb ? `<img class="recent-thumb" src="${thumb}" />` : `<span class="recent-icon">${ICONS.file}</span>`}
+        ${thumb ? `<img class="recent-thumb" src="${thumb}" />` : `<span class="recent-icon">${getFileIcon(rType)}</span>`}
         <span class="recent-name">${name}</span>
         <span class="recent-time">${ago}</span>
       </div>`;
