@@ -817,14 +817,14 @@ function showUrlPanel(file, config) {
           <span class="url-panel-label">HTML</span>
           <div class="url-panel-row">
             <code class="url-panel-url">${escapeHtml(htmlSnippet)}</code>
-            <button class="btn btn-sm url-panel-copy" data-url="${htmlSnippet}">Copy</button>
+            <button class="btn btn-sm url-panel-copy" data-url="${escapeHtml(htmlSnippet)}">Copy</button>
           </div>
         </div>
         <div class="url-panel-item">
           <span class="url-panel-label">Markdown</span>
           <div class="url-panel-row">
             <code class="url-panel-url">${escapeHtml(mdSnippet)}</code>
-            <button class="btn btn-sm url-panel-copy" data-url="${mdSnippet}">Copy</button>
+            <button class="btn btn-sm url-panel-copy" data-url="${escapeHtml(mdSnippet)}">Copy</button>
           </div>
         </div>
         <details class="url-panel-alt">
