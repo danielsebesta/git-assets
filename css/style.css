@@ -398,7 +398,7 @@ body {
   cursor: pointer;
 }
 
-.breadcrumbs a:hover { text-decoration: underline; }
+.breadcrumbs a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
 
 .breadcrumbs .sep { color: var(--text-muted); margin: 0 2px; }
 
