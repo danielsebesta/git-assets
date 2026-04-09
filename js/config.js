@@ -1,13 +1,22 @@
-import { listRepos } from './github.js?v=9';
+import { listRepos } from './github.js?v=10';
 
 const CONFIG_KEY = 'gitassets_config';
 const REPOS_KEY = 'gitassets_repos';
-export const ASSETS_ROOT = '_assets';
+export const ASSETS_ROOT = '';
+
+function safeParse(key, fallback = null) {
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return fallback;
+    return JSON.parse(stored);
+  } catch {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
 
 export function getConfig() {
-  const stored = localStorage.getItem(CONFIG_KEY);
-  if (!stored) return null;
-  return JSON.parse(stored);
+  return safeParse(CONFIG_KEY);
 }
 
 export function saveConfig(config) {
@@ -20,8 +29,7 @@ export function clearConfig() {
 }
 
 export function getSavedRepos() {
-  const stored = localStorage.getItem(REPOS_KEY);
-  return stored ? JSON.parse(stored) : [];
+  return safeParse(REPOS_KEY, []);
 }
 
 export function addSavedRepo(config) {
@@ -38,42 +46,11 @@ export function removeSavedRepo(owner, repo) {
   localStorage.setItem(REPOS_KEY, JSON.stringify(repos));
 }
 
-export async function autoDetectRepo(username) {
-  const repos = await listRepos();
-
-  // Look for a fork of git-assets
-  const fork = repos.find(
-    (r) => r.fork && r.name === 'git-assets'
-  );
-  if (fork) {
-    return {
-      owner: fork.owner.login,
-      repo: fork.name,
-      branch: fork.default_branch,
-    };
-  }
-
-  // Look for any repo named git-assets owned by the user
-  const own = repos.find(
-    (r) => r.name === 'git-assets' && r.owner.login === username
-  );
-  if (own) {
-    return {
-      owner: own.owner.login,
-      repo: own.name,
-      branch: own.default_branch,
-    };
-  }
-
-  return null;
-}
-
 // ── Favorites ──
 const FAVS_KEY = 'gitassets_favorites';
 
 export function getFavorites() {
-  const stored = localStorage.getItem(FAVS_KEY);
-  return stored ? JSON.parse(stored) : [];
+  return safeParse(FAVS_KEY, []);
 }
 
 export function toggleFavorite(path) {
@@ -82,7 +59,7 @@ export function toggleFavorite(path) {
   if (idx >= 0) favs.splice(idx, 1);
   else favs.push(path);
   localStorage.setItem(FAVS_KEY, JSON.stringify(favs));
-  return idx < 0; // returns true if added
+  return idx < 0;
 }
 
 export function isFavorite(path) {
@@ -96,15 +73,13 @@ const MAX_RECENT = 10;
 export function addRecent(path, owner, repo, branch) {
   const recent = getRecent();
   const entry = { path, owner, repo, branch, time: Date.now() };
-  // Remove if already exists
   const filtered = recent.filter((r) => r.path !== path);
   filtered.unshift(entry);
   localStorage.setItem(RECENT_KEY, JSON.stringify(filtered.slice(0, MAX_RECENT)));
 }
 
 export function getRecent() {
-  const stored = localStorage.getItem(RECENT_KEY);
-  return stored ? JSON.parse(stored) : [];
+  return safeParse(RECENT_KEY, []);
 }
 
 export function getRepoList(repos) {

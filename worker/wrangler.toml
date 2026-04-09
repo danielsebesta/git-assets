@@ -1,9 +1,17 @@
 name = "git-assets-auth"
 main = "index.js"
 compatibility_date = "2024-01-01"
+workers_dev = false
+preview_urls = false
 
-# Set these via `wrangler secret put` or in the Cloudflare dashboard:
+routes = [
+  { pattern = "auth-git-assets.sebesta.dev", zone_name = "sebesta.dev", custom_domain = true }
+]
+
+[vars]
+FRONTEND_URL = "https://git-assets.sebesta.dev"
+WORKER_URL = "https://auth-git-assets.sebesta.dev"
+
+# Set secrets via `wrangler secret put`:
 # GITHUB_CLIENT_ID
 # GITHUB_CLIENT_SECRET
-# WORKER_URL       — e.g. https://git-assets-auth.yourname.workers.dev
-# FRONTEND_URL     — e.g. https://yourname.github.io/git-assets

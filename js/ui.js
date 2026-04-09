@@ -1,10 +1,56 @@
-import { login, logout, getToken } from './auth.js?v=9';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit } from './github.js?v=9';
-import { getConfig, saveConfig, clearConfig, autoDetectRepo, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=9';
-import { compressImage } from './compress.js?v=9';
-import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=9';
+import { login, logout, getToken } from './auth.js?v=10';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=10';
+import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=10';
+import { compressImage } from './compress.js?v=10';
+import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=10';
 
-const GITHUB_ICON = `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>`;
+// ── Logo ──
+const LOGO_SVG = `<svg viewBox="0 0 131.914 132.292" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M34.381 178.86c-2.113-.309-3.476-.715-4.92-1.466-3.455-1.797-5.949-4.92-7.035-8.807l-.308-1.105-.03-33.825c-.028-30-.011-33.942.148-34.86.842-4.883 4.434-9.04 9.18-10.627 2.004-.67 1.487-.644 13.717-.69 7.906-.03 11.62-.004 12.426.088a13.6 13.6 0 0 1 7.955 3.762c1.13 1.101 1.904 2.109 2.558 3.327.69 1.286.917 1.926 1.52 4.29l.547 2.14 2.615-2.953c1.438-1.625 3.849-4.352 5.357-6.062l2.743-3.109-.22-.702c-.946-3.043-.173-6.715 1.934-9.18 1.365-1.598 3.022-2.629 5.182-3.224.573-.157 1.125-.199 2.427-.182.927.012 1.83.038 2.005.057.291.033.946-.673 7.297-7.864 4.908-5.557 6.955-7.953 6.902-8.079-.238-.563-.527-1.938-.589-2.804-.173-2.425.684-5.038 2.274-6.931 1.214-1.445 2.589-2.383 4.463-3.043 1.181-.417 1.195-.418 3.105-.414 1.78.004 1.989.028 2.906.33 3.566 1.172 6.115 4.028 6.79 7.611 1.069 5.661-2.896 10.988-8.664 11.642-1.203.136-2.722 0-3.817-.34l-.713-.222-6.488 7.342c-3.569 4.038-6.448 7.358-6.397 7.377.05.02 2.2-.098 4.779-.261 2.578-.164 8.924-.56 14.103-.88 15.323-.947 16.958-1.051 16.976-1.078.009-.014.22-.417.47-.897.613-1.176 2.412-2.99 3.651-3.684 2.723-1.522 5.942-1.72 8.777-.536 1.043.435 2.493 1.445 3.275 2.28 1.807 1.932 2.705 4.18 2.71 6.786.007 4.47-2.808 8.22-7.148 9.519-.9.27-1.265.315-2.615.323-1.82.011-2.645-.16-4.167-.865-1.817-.843-3.454-2.288-4.319-3.812a24 24 0 0 0-.528-.899c-.11-.162-1.851-.074-17.204.874-19.353 1.196-18.535 1.136-18.535 1.346 0 .363-1.212 2.509-1.844 3.267-1.238 1.483-3.13 2.675-5.079 3.2-1.663.448-4.332.312-5.873-.3-.137-.054-1.443 1.354-5.034 5.425l-4.85 5.497 16.775.062c15.166.055 16.87.08 17.776.26 2.783.549 5.25 1.854 7.193 3.803 2.2 2.21 3.579 5.011 3.946 8.023.1.813.125 7.47.097 25.282l-.039 24.178-.275 1.046c-.662 2.514-1.741 4.505-3.394 6.26-1.982 2.104-4.195 3.358-7.253 4.112-.76.187-3.282.201-38.881.217-20.938.009-38.2-.002-38.36-.025m76.376-9.53c.917-.434 1.484-.913 1.951-1.647.772-1.214.722.635.689-25.606l-.03-23.77-.38-.771c-.481-.977-1.493-1.943-2.435-2.323l-.672-.272H72.392c-35.777 0-37.515.01-38.086.21a4.74 4.74 0 0 0-2.852 2.725l-.27.669-.033 23.306c-.023 16.43.004 23.526.094 24.05.306 1.794 1.705 3.33 3.401 3.736.206.049 17.244.081 37.862.072l37.488-.018zM32.52 106.154c1.574-.403 3.278-.45 16.42-.452 8.76-.002 12.873-.04 12.873-.122 0-.36-1.45-5.843-1.679-6.345-.513-1.129-1.601-2.053-2.847-2.417-.556-.163-1.904-.185-11.4-.185-9.556 0-10.838.022-11.399.187-1.7.504-2.915 1.852-3.236 3.588-.07.377-.127 1.911-.127 3.41v2.723l.262-.082c.144-.044.654-.182 1.133-.305" transform="translate(-22.077 -46.596)"/></svg>`;
+
+// ── SVG Icons ──
+const icon = (path, size = 16) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+
+const ICONS = {
+  github: `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>`,
+  sun: icon('<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'),
+  moon: icon('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'),
+  zap: icon('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor" stroke="none"/>', 20),
+  package: icon('<line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>', 20),
+  image: icon('<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>', 20),
+  shield: icon('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 20),
+  clock: icon('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'),
+  chart: icon('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'),
+  folder: icon('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>', 28),
+  file: icon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>', 20),
+  pin: icon('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>', 12),
+  link: icon('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>', 14),
+  trash: icon('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>', 14),
+  x: icon('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>', 18),
+};
+
+// ── Focus Trap ──
+function trapFocus(overlay) {
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  const close = () => overlay.remove();
+  overlay.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { close(); return; }
+    if (e.key !== 'Tab') return;
+    const focusable = overlay.querySelectorAll('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+  // Focus first focusable element
+  requestAnimationFrame(() => {
+    const first = overlay.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (first) first.focus();
+  });
+}
+
+const GITHUB_ICON = ICONS.github;
 
 let currentUser = null;
 let currentPath = ASSETS_ROOT;
@@ -22,6 +68,8 @@ function getTheme() {
 function setTheme(theme) {
   localStorage.setItem(THEME_KEY, theme);
   document.documentElement.setAttribute('data-theme', theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = theme === 'dark' ? '#000000' : '#ffffff';
 }
 
 // Apply saved theme on load
@@ -33,24 +81,120 @@ export function showToast(msg, type = 'success') {
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
 
-// ── Login Screen ──
+// ── Login Screen (Landing Page) ──
 
 export function renderLogin() {
+  // Hide the app header on landing — we render our own
+  $('#header').style.display = 'none';
+
   $('#app').innerHTML = `
-    <div class="login-screen">
-      <h1>GitAssets</h1>
-      <p>Turn your GitHub repository into a free CDN for images and static assets.</p>
-      <button class="btn btn-github" id="login-btn">
-        ${GITHUB_ICON} Sign in with GitHub
-      </button>
+    <div class="landing">
+      <!-- Nav -->
+      <nav class="landing-nav">
+        <a class="landing-nav-logo" href="#">${LOGO_SVG} GitAssets</a>
+        <div class="landing-nav-right">
+          <a href="https://github.com/danielsebesta/git-assets" class="landing-nav-link" target="_blank" rel="noopener">GitHub</a>
+          <button class="btn btn-sm btn-icon" id="landing-theme-btn" title="Toggle theme" aria-label="Toggle theme">${getTheme() === 'dark' ? ICONS.sun : ICONS.moon}</button>
+          <button class="btn-cta btn-cta-sm" id="login-btn-top">${GITHUB_ICON} Sign in</button>
+        </div>
+      </nav>
+
+      <!-- Hero -->
+      <section class="landing-hero">
+        <div class="landing-hero-badge">Free &amp; open source</div>
+        <h1 class="landing-hero-title">Upload to GitHub.<br/><span class="landing-hero-accent">Get CDN links instantly.</span></h1>
+        <p class="landing-hero-sub">Manage images and assets in any GitHub repo.<br/>Serve them globally via jsDelivr CDN. No backend, no config.</p>
+        <div class="landing-hero-actions">
+          <button class="btn-cta" id="login-btn">${GITHUB_ICON} Connect GitHub</button>
+        </div>
+        <p class="landing-hero-note">Works with any public or private repo you have push access to.</p>
+      </section>
+
+      <!-- How it works -->
+      <section class="landing-section">
+        <h2 class="landing-section-title">Three steps. That's it.</h2>
+        <div class="landing-steps">
+          <div class="landing-step">
+            <div class="landing-step-num">1</div>
+            <h3>Connect</h3>
+            <p>Sign in with GitHub and pick any repository — or create a new one for your assets.</p>
+          </div>
+          <div class="landing-step">
+            <div class="landing-step-num">2</div>
+            <h3>Upload</h3>
+            <p>Drag & drop files, paste from clipboard, or upload entire folders. Images auto-compress to WebP.</p>
+          </div>
+          <div class="landing-step">
+            <div class="landing-step-num">3</div>
+            <h3>Use</h3>
+            <p>Copy the CDN link — ready for your blog, README, docs, or any project. Served via jsDelivr edge network.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="landing-section">
+        <h2 class="landing-section-title">Built for developers</h2>
+        <div class="landing-features">
+          <div class="landing-feature">
+            <div class="landing-feature-icon">${ICONS.zap}</div>
+            <h3>Instant CDN</h3>
+            <p>Files served via jsDelivr with edge caching worldwide. Copy-ready URLs, HTML, and Markdown snippets.</p>
+          </div>
+          <div class="landing-feature">
+            <div class="landing-feature-icon">${ICONS.package}</div>
+            <h3>Batch upload</h3>
+            <p>Upload multiple files as a single Git commit. Drag entire folders. Paste screenshots with Ctrl+V.</p>
+          </div>
+          <div class="landing-feature">
+            <div class="landing-feature-icon">${ICONS.image}</div>
+            <h3>Auto optimization</h3>
+            <p>Images automatically compress to WebP before upload — smaller files, faster loads, zero effort.</p>
+          </div>
+          <div class="landing-feature">
+            <div class="landing-feature-icon">${ICONS.shield}</div>
+            <h3>Your repo, your data</h3>
+            <p>Files live in your own GitHub repository. No vendor lock-in, no third-party storage. Full Git history.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Self-host -->
+      <section class="landing-section landing-selfhost">
+        <div class="landing-selfhost-inner">
+          <h2 class="landing-section-title">Self-host option</h2>
+          <p>GitAssets is fully open source under MIT license. Fork the repo and host your own instance — the frontend is just static HTML/CSS/JS on GitHub Pages. The only backend is a tiny Cloudflare Worker for OAuth.</p>
+          <a href="https://github.com/danielsebesta/git-assets" class="btn-cta btn-cta-outline" target="_blank" rel="noopener">${GITHUB_ICON} View on GitHub</a>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="landing-footer">
+        <span>GitAssets</span>
+        <span class="landing-footer-sep">&middot;</span>
+        <a href="https://github.com/danielsebesta/git-assets" target="_blank" rel="noopener">GitHub</a>
+        <span class="landing-footer-sep">&middot;</span>
+        <span>MIT License</span>
+      </footer>
     </div>
   `;
-  $('#login-btn').addEventListener('click', login);
+
+  // Event listeners
+  const loginAction = () => login();
+  $('#login-btn').addEventListener('click', loginAction);
+  $('#login-btn-top').addEventListener('click', loginAction);
+  $('#landing-theme-btn').addEventListener('click', () => {
+    const next = getTheme() === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    $('#landing-theme-btn').innerHTML = next === 'dark' ? ICONS.sun : ICONS.moon;
+  });
 }
 
 // ── Setup Wizard ──
@@ -59,30 +203,22 @@ export async function renderSetup() {
   const app = $('#app');
   app.innerHTML = `
     <div class="setup-screen">
-      <h2>Choose your repository</h2>
-      <p>Select the repository where your assets will be stored.</p>
-      <div class="setup-detecting"><span class="spinner"></span> Looking for your repos...</div>
+      <h2>Pick a repository</h2>
+      <p>Choose any repo to store your assets — or enter one manually.</p>
+      <div class="setup-detecting"><span class="spinner"></span> Loading your repos...</div>
     </div>
   `;
 
   try {
     currentUser = currentUser || await getUser();
-    const detected = await autoDetectRepo(currentUser.login);
-
-    if (detected) {
-      saveConfig(detected);
-      showToast(`Auto-detected ${detected.owner}/${detected.repo}`);
-      await renderDashboard();
-      return;
-    }
 
     allRepos = allRepos || await listRepos();
     const pushable = getRepoList(allRepos);
 
     const container = app.querySelector('.setup-screen');
     container.innerHTML = `
-      <h2>Choose your repository</h2>
-      <p>No fork of git-assets found. Pick a repo to store your assets, or enter one manually.</p>
+      <h2>Pick a repository</h2>
+      <p>Choose any repo to store your assets, or enter one manually.</p>
       <ul class="setup-repo-list" id="repo-list"></ul>
       <div class="setup-manual">
         <input type="text" id="manual-repo" placeholder="owner/repo (e.g. myname/my-assets)" />
@@ -102,15 +238,25 @@ export async function renderSetup() {
       list.appendChild(li);
     });
 
-    $('#manual-btn').addEventListener('click', () => {
+    $('#manual-btn').addEventListener('click', async () => {
       const val = $('#manual-repo').value.trim();
       const parts = val.split('/');
       if (parts.length !== 2 || !parts[0] || !parts[1]) {
         showToast('Enter as owner/repo', 'error');
         return;
       }
-      saveConfig({ owner: parts[0], repo: parts[1], branch: 'main' });
-      renderDashboard();
+      const btn = $('#manual-btn');
+      btn.disabled = true;
+      btn.textContent = 'Checking...';
+      try {
+        const info = await getRepoInfo(parts[0], parts[1]);
+        saveConfig({ owner: parts[0], repo: parts[1], branch: info.default_branch || 'main' });
+        renderDashboard();
+      } catch {
+        showToast('Repository not found or not accessible', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Use';
+      }
     });
 
     $('#manual-repo').addEventListener('keydown', (e) => {
@@ -139,9 +285,9 @@ export async function renderDashboard() {
             <div class="storage-bar-fill" id="storage-fill"></div>
             <span class="storage-label" id="storage-label"></span>
           </div>
-          <button class="btn btn-sm" id="stats-btn">Stats</button>
           <button class="btn btn-sm" id="new-folder-btn">New folder</button>
-          <button class="btn btn-sm" id="history-btn">History</button>
+          <button class="btn btn-sm btn-icon" id="history-btn" title="History" aria-label="History">${ICONS.clock}</button>
+          <button class="btn btn-sm btn-icon" id="stats-btn" title="Stats" aria-label="Stats">${ICONS.chart}</button>
           <button class="btn btn-primary btn-sm" id="upload-btn">Upload</button>
         </div>
       </div>
@@ -164,8 +310,8 @@ export async function renderDashboard() {
         </select>
       </div>
       <div class="dropzone" id="dropzone">
-        <div class="dropzone-text">Drop files here to upload</div>
-        <div class="dropzone-hint">or click Upload / use the button above</div>
+        <div class="dropzone-text">Drop files here, paste from clipboard, or click Upload</div>
+        <div class="dropzone-hint">Images auto-compress to WebP</div>
       </div>
       <div id="file-area">
         <div style="text-align:center;padding:40px;"><span class="spinner"></span></div>
@@ -199,16 +345,14 @@ export async function renderDashboard() {
 
 function renderBreadcrumbs() {
   const bc = $('#breadcrumbs');
-  // Show path relative to _assets root
-  const relative = currentPath.startsWith(ASSETS_ROOT)
-    ? currentPath.slice(ASSETS_ROOT.length).replace(/^\//, '')
-    : currentPath;
-  const parts = relative.split('/').filter(Boolean);
+  const config = getConfig();
+  const repoLabel = config ? config.repo : 'root';
+  const parts = currentPath.split('/').filter(Boolean);
 
-  let html = `<a data-path="${ASSETS_ROOT}">assets</a>`;
-  let accumulated = ASSETS_ROOT;
+  let html = `<a data-path="">${repoLabel}</a>`;
+  let accumulated = '';
   for (const part of parts) {
-    accumulated += '/' + part;
+    accumulated = accumulated ? accumulated + '/' + part : part;
     html += `<span class="sep">/</span><a data-path="${accumulated}">${part}</a>`;
   }
   bc.innerHTML = html;
@@ -234,7 +378,7 @@ async function loadFiles(config) {
       area.innerHTML = `
         <div class="empty-state">
           <p>No files yet</p>
-          <p>Upload your first asset using drag & drop or the upload button.</p>
+          <p>Drop files here or click Upload to get started.</p>
         </div>
       `;
       return;
@@ -294,12 +438,12 @@ function createFileCard(file, config, index) {
 
   let thumbHtml;
   if (isDir) {
-    thumbHtml = `<div class="file-thumb-placeholder"><span class="folder-icon">&#128193;</span></div>`;
+    thumbHtml = `<div class="file-thumb-placeholder"><span class="folder-icon">${ICONS.folder}</span></div>`;
   } else if (isImage) {
     const thumbUrl = getRawUrl(config.owner, config.repo, config.branch, file.path);
     thumbHtml = `<img class="file-thumb" src="${thumbUrl}" alt="${file.name}" loading="lazy" /><div class="hover-preview"><img src="${thumbUrl}" alt="${file.name}" /></div>`;
   } else {
-    thumbHtml = `<div class="file-thumb-placeholder">&#128196;</div>`;
+    thumbHtml = `<div class="file-thumb-placeholder">${ICONS.file}</div>`;
   }
 
   const sizeText = file.size ? formatSize(file.size) : '';
@@ -307,24 +451,31 @@ function createFileCard(file, config, index) {
   card.innerHTML = `
     ${thumbHtml}
     <div class="file-info">
-      <div class="file-name" title="${file.name}">${isFavorite(file.path) ? '<span class="pin-icon">&#128204;</span> ' : ''}${file.name}</div>
+      <div class="file-name" title="${file.name}">${isFavorite(file.path) ? '<span class="pin-icon">${ICONS.pin}</span> ' : ''}${file.name}</div>
       ${sizeText ? `<div class="file-size">${sizeText}</div>` : ''}
     </div>
     ${!isDir ? `
     <div class="file-actions">
-      <button class="btn-icon" title="Copy URL" data-action="copy-menu">&#128279;</button>
-      <button class="btn-icon" title="Delete" data-action="delete" style="color:var(--danger);">&#128465;</button>
+      <button class="btn-icon" title="Copy URL" data-action="copy-menu">${ICONS.link}</button>
+      <button class="btn-icon" title="Delete" data-action="delete" style="color:var(--danger);">${ICONS.trash}</button>
     </div>
     ` : ''}
   `;
 
   if (isDir) {
     card.style.cursor = 'pointer';
-    card.addEventListener('click', () => {
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Open folder ${file.name}`);
+    const openFolder = () => {
       currentPath = file.path;
       clearSelection();
       renderBreadcrumbs();
       loadFiles(config);
+    };
+    card.addEventListener('click', openFolder);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFolder(); }
     });
 
     // Folder is a drop target for moving files
@@ -475,8 +626,8 @@ function showContextMenu(x, y, file, config) {
   document.body.appendChild(menu);
 
   const rect = menu.getBoundingClientRect();
-  if (rect.right > window.innerWidth) menu.style.left = `${x - rect.width}px`;
-  if (rect.bottom > window.innerHeight) menu.style.top = `${y - rect.height}px`;
+  if (rect.right > window.innerWidth) menu.style.left = `${Math.max(0, x - rect.width)}px`;
+  if (rect.bottom > window.innerHeight) menu.style.top = `${Math.max(0, y - rect.height)}px`;
 
   menu.querySelectorAll('.context-item').forEach((btn) => {
     btn.addEventListener('click', (e) => {
@@ -589,26 +740,27 @@ function showUrlPanel(file, config) {
   }));
 
   const primaryUrl = urls[0].url;
-  const htmlSnippet = isImage ? `<img src="${primaryUrl}" alt="${file.name}" />` : `<a href="${primaryUrl}">${file.name}</a>`;
-  const mdSnippet = isImage ? `![${file.name}](${primaryUrl})` : `[${file.name}](${primaryUrl})`;
+  const safeName = escapeHtml(file.name);
+  const htmlSnippet = isImage ? `<img src="${primaryUrl}" alt="${safeName}" />` : `<a href="${primaryUrl}">${safeName}</a>`;
+  const mdSnippet = isImage ? `![${safeName}](${primaryUrl})` : `[${safeName}](${primaryUrl})`;
+
+  const altUrls = urls.slice(1);
 
   overlay.innerHTML = `
     <div class="modal url-panel">
       <div class="history-header">
         <h3>${file.name}</h3>
-        <button class="btn-icon history-close">&times;</button>
+        <button class="btn-icon history-close">${ICONS.x}</button>
       </div>
       ${isImage ? `<img class="url-panel-preview" src="${urls[1].url}" alt="${file.name}" />` : ''}
       <div class="url-panel-list">
-        ${urls.map((u) => `
-          <div class="url-panel-item">
-            <span class="url-panel-label">${u.name}</span>
-            <div class="url-panel-row">
-              <code class="url-panel-url">${u.url}</code>
-              <button class="btn btn-sm url-panel-copy" data-url="${u.url}">Copy</button>
-            </div>
+        <div class="url-panel-item">
+          <span class="url-panel-label">${urls[0].name} (recommended)</span>
+          <div class="url-panel-row">
+            <code class="url-panel-url">${urls[0].url}</code>
+            <button class="btn btn-primary btn-sm url-panel-copy" data-url="${urls[0].url}">Copy</button>
           </div>
-        `).join('')}
+        </div>
         <div class="url-panel-item">
           <span class="url-panel-label">HTML</span>
           <div class="url-panel-row">
@@ -623,10 +775,23 @@ function showUrlPanel(file, config) {
             <button class="btn btn-sm url-panel-copy" data-url="${mdSnippet}">Copy</button>
           </div>
         </div>
+        <details class="url-panel-alt">
+          <summary>Alternative CDN providers</summary>
+          ${altUrls.map((u) => `
+            <div class="url-panel-item">
+              <span class="url-panel-label">${u.name}</span>
+              <div class="url-panel-row">
+                <code class="url-panel-url">${u.url}</code>
+                <button class="btn btn-sm url-panel-copy" data-url="${u.url}">Copy</button>
+              </div>
+            </div>
+          `).join('')}
+        </details>
       </div>
     </div>
   `;
   document.body.appendChild(overlay);
+  trapFocus(overlay);
 
   overlay.querySelector('.history-close').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
@@ -737,6 +902,7 @@ function showDeleteModal(file, config) {
     </div>
   `;
   document.body.appendChild(overlay);
+  trapFocus(overlay);
 
   overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
@@ -765,14 +931,14 @@ function showBatchRename(config) {
     <div class="modal" style="max-width:480px;">
       <h3>Batch rename (${sel.size} files)</h3>
       <div style="display:flex;flex-direction:column;gap:8px;margin:12px 0;">
-        <label style="font-size:13px;color:var(--text-muted);">Add prefix</label>
+        <label for="br-prefix" style="font-size:13px;color:var(--text-muted);">Add prefix</label>
         <input type="text" id="br-prefix" class="staging-input" placeholder="e.g. banner-" />
-        <label style="font-size:13px;color:var(--text-muted);">Add suffix (before extension)</label>
+        <label for="br-suffix" style="font-size:13px;color:var(--text-muted);">Add suffix (before extension)</label>
         <input type="text" id="br-suffix" class="staging-input" placeholder="e.g. -v2" />
-        <label style="font-size:13px;color:var(--text-muted);">Find & replace</label>
+        <label id="br-fr-label" style="font-size:13px;color:var(--text-muted);">Find & replace</label>
         <div style="display:flex;gap:8px;">
-          <input type="text" id="br-find" class="staging-input" placeholder="Find" />
-          <input type="text" id="br-replace" class="staging-input" placeholder="Replace" />
+          <input type="text" id="br-find" class="staging-input" placeholder="Find" aria-labelledby="br-fr-label" />
+          <input type="text" id="br-replace" class="staging-input" placeholder="Replace" aria-labelledby="br-fr-label" />
         </div>
         <div id="br-preview" style="font-size:12px;color:var(--text-muted);max-height:120px;overflow-y:auto;margin-top:4px;"></div>
       </div>
@@ -783,6 +949,7 @@ function showBatchRename(config) {
     </div>
   `;
   document.body.appendChild(overlay);
+  trapFocus(overlay);
 
   const paths = [...sel];
   const files = paths.map((p) => currentFiles.find((f) => f.path === p)).filter(Boolean);
@@ -858,6 +1025,7 @@ function setupNewFolder(config) {
     overlay.innerHTML = `
       <div class="modal">
         <h3>New folder</h3>
+        <label for="folder-name-input" class="sr-only">Folder name</label>
         <input type="text" id="folder-name-input" class="staging-input" placeholder="Folder name" style="width:100%;margin:12px 0;" />
         <div class="modal-actions">
           <button class="btn btn-sm" id="folder-cancel">Cancel</button>
@@ -866,9 +1034,9 @@ function setupNewFolder(config) {
       </div>
     `;
     document.body.appendChild(overlay);
+    trapFocus(overlay);
 
     const input = overlay.querySelector('#folder-name-input');
-    input.focus();
 
     const create = async () => {
       const name = input.value.trim().replace(/[^a-zA-Z0-9_\-. ]/g, '');
@@ -1031,6 +1199,7 @@ function setupSelectionBar(config) {
       </div>
     `;
     document.body.appendChild(overlay);
+    trapFocus(overlay);
     overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
     overlay.querySelector('#modal-confirm').addEventListener('click', async () => {
@@ -1106,7 +1275,13 @@ async function stageFiles(fileList) {
       showToast(`${file.name} already exists — will overwrite`, 'error');
     }
 
-    const result = await compressImage(file);
+    let result;
+    try {
+      result = await compressImage(file);
+    } catch (err) {
+      showToast(`Failed to process ${file.name}: ${err.message}`, 'error');
+      continue;
+    }
     stagedFiles.push({
       file: result.file,
       originalFile: result.converted ? file : null,
@@ -1163,12 +1338,12 @@ function renderStagingArea() {
       : '';
 
     card.innerHTML = `
-      ${isImage ? `<img class="staging-thumb" src="${staged.preview}" />` : `<div class="staging-thumb-placeholder">&#128196;</div>`}
+      ${isImage ? `<img class="staging-thumb" src="${staged.preview}" />` : `<div class="staging-thumb-placeholder">${ICONS.file}</div>`}
       <div class="staging-info">
         <span class="staging-name" title="${staged.file.name}">${staged.file.name}</span>
         <span class="staging-file-size">${formatSize(staged.file.size)} ${savingsHtml}</span>
       </div>
-      <button class="btn-icon staging-remove" data-index="${i}" title="Remove">&times;</button>
+      <button class="btn-icon staging-remove" data-index="${i}" title="Remove">${ICONS.x}</button>
     `;
     grid.appendChild(card);
   });
@@ -1255,8 +1430,10 @@ async function commitStagedFiles(message) {
     batchFiles.forEach((bf) => addRecent(bf.path, config.owner, config.repo, config.branch));
     fill.style.width = '100%';
     status.textContent = `Uploaded ${files.length} file${files.length > 1 ? 's' : ''}`;
+    stagedFiles = [];
   } catch (err) {
-    showToast(`Upload failed: ${err.message}`, 'error');
+    showToast(`Upload failed: ${err.message}. Files kept in staging for retry.`, 'error');
+    // Don't clear staging — let user retry
   }
 
   setTimeout(() => {
@@ -1264,7 +1441,6 @@ async function commitStagedFiles(message) {
     fill.style.width = '0%';
   }, 2000);
 
-  stagedFiles = [];
   renderStagingArea();
   await loadFiles(config);
   loadRepoSize(config);
@@ -1304,18 +1480,21 @@ async function getFilesFromDrop(dataTransferItems) {
   const files = [];
 
   async function readEntry(entry, path = '') {
-    if (entry.isFile) {
-      const file = await new Promise((resolve) => entry.file(resolve));
-      // Preserve relative path from folder
-      const relativePath = path ? `${path}/${file.name}` : file.name;
-      const namedFile = new File([file], relativePath, { type: file.type });
-      files.push(namedFile);
-    } else if (entry.isDirectory) {
-      const reader = entry.createReader();
-      const entries = await new Promise((resolve) => reader.readEntries(resolve));
-      for (const child of entries) {
-        await readEntry(child, path ? `${path}/${entry.name}` : entry.name);
+    try {
+      if (entry.isFile) {
+        const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+        const relativePath = path ? `${path}/${file.name}` : file.name;
+        const namedFile = new File([file], relativePath, { type: file.type });
+        files.push(namedFile);
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const entries = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+        for (const child of entries) {
+          await readEntry(child, path ? `${path}/${entry.name}` : entry.name);
+        }
       }
+    } catch {
+      // Skip files that can't be read (e.g. permission denied)
     }
   }
 
@@ -1383,9 +1562,13 @@ function showRepoSwitcher() {
       e.stopPropagation();
       menu.remove();
 
+      // Clean up staged file previews
+      stagedFiles.forEach((s) => URL.revokeObjectURL(s.preview));
+      stagedFiles = [];
+
       if (item.dataset.action === 'add-new') {
         clearConfig();
-        currentPath = ASSETS_ROOT;
+        currentPath = '';
         allRepos = null;
         renderSetup();
         return;
@@ -1397,7 +1580,7 @@ function showRepoSwitcher() {
         branch: item.dataset.branch,
       };
       saveConfig(newConfig);
-      currentPath = ASSETS_ROOT;
+      currentPath = '';
       renderDashboard();
     });
   });
@@ -1424,7 +1607,7 @@ async function showHistory(config) {
     <div class="modal history-modal">
       <div class="history-header">
         <h3>Asset History</h3>
-        <button class="btn-icon history-close">&times;</button>
+        <button class="btn-icon history-close">${ICONS.x}</button>
       </div>
       <div class="history-content">
         <div style="text-align:center;padding:40px;"><span class="spinner"></span></div>
@@ -1432,6 +1615,7 @@ async function showHistory(config) {
     </div>
   `;
   document.body.appendChild(overlay);
+  trapFocus(overlay);
 
   overlay.querySelector('.history-close').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
@@ -1646,12 +1830,13 @@ async function showStats(config) {
     <div class="modal" style="max-width:480px;">
       <div class="history-header">
         <h3>Repository Stats</h3>
-        <button class="btn-icon history-close">&times;</button>
+        <button class="btn-icon history-close">${ICONS.x}</button>
       </div>
       <div style="text-align:center;padding:20px;"><span class="spinner"></span></div>
     </div>
   `;
   document.body.appendChild(overlay);
+  trapFocus(overlay);
   overlay.querySelector('.history-close').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 
@@ -1680,7 +1865,7 @@ async function showStats(config) {
     modal.innerHTML = `
       <div class="history-header">
         <h3>Repository Stats</h3>
-        <button class="btn-icon history-close">&times;</button>
+        <button class="btn-icon history-close">${ICONS.x}</button>
       </div>
       <div class="stats-grid">
         <div class="stats-card">
@@ -1743,7 +1928,7 @@ function renderRecentUploads(config) {
   section.innerHTML = `
     <div class="recent-header">
       <span class="recent-title">Recent uploads</span>
-      <button class="btn-icon" id="recent-dismiss" title="Dismiss">&times;</button>
+      <button class="btn-icon" id="recent-dismiss" title="Dismiss">${ICONS.x}</button>
     </div>
     <div class="recent-list">${recent.map((r) => {
       const name = r.path.split('/').pop();
@@ -1752,7 +1937,7 @@ function renderRecentUploads(config) {
       const thumb = isImage ? getRawUrl(r.owner, r.repo, r.branch, r.path) : '';
       const ago = timeAgo(r.time);
       return `<div class="recent-item" data-url="${url}" title="${r.path}">
-        ${thumb ? `<img class="recent-thumb" src="${thumb}" />` : `<span class="recent-icon">&#128196;</span>`}
+        ${thumb ? `<img class="recent-thumb" src="${thumb}" />` : `<span class="recent-icon">${ICONS.file}</span>`}
         <span class="recent-name">${name}</span>
         <span class="recent-time">${ago}</span>
       </div>`;
@@ -1784,9 +1969,13 @@ function timeAgo(ts) {
 
 const STORAGE_LIMIT = 1024 * 1024 * 1024; // 1 GB
 
+let repoSizeGeneration = 0;
+
 async function loadRepoSize(config) {
+  const gen = ++repoSizeGeneration;
   try {
     const info = await getRepoInfo(config.owner, config.repo);
+    if (gen !== repoSizeGeneration) return; // stale response
     const sizeBytes = info.size * 1024; // API returns KB
     const pct = Math.min((sizeBytes / STORAGE_LIMIT) * 100, 100);
 
@@ -1832,24 +2021,26 @@ function formatSize(bytes) {
 export function renderHeader(user) {
   const header = $('#header');
   if (!user) {
-    header.innerHTML = `<a class="header-logo" href="#">GitAssets</a><div></div>`;
+    // Landing page renders its own nav, hide the app header
+    header.style.display = 'none';
     return;
   }
+  header.style.display = '';
   header.innerHTML = `
-    <a class="header-logo" href="#">GitAssets</a>
+    <a class="header-logo" href="#">${LOGO_SVG} GitAssets</a>
     <div class="header-right">
       <span class="header-user">
         <img class="header-avatar" src="${user.avatar_url}" alt="${user.login}" />
         ${user.login}
       </span>
-      <button class="btn btn-sm btn-icon" id="theme-btn" title="Toggle theme">${getTheme() === 'dark' ? '&#9728;' : '&#9790;'}</button>
+      <button class="btn btn-sm btn-icon" id="theme-btn" title="Toggle theme">${getTheme() === 'dark' ? ICONS.sun : ICONS.moon}</button>
       <button class="btn btn-sm" id="logout-btn">Logout</button>
     </div>
   `;
   $('#theme-btn').addEventListener('click', () => {
     const next = getTheme() === 'dark' ? 'light' : 'dark';
     setTheme(next);
-    $('#theme-btn').innerHTML = next === 'dark' ? '&#9728;' : '&#9790;';
+    $('#theme-btn').innerHTML = next === 'dark' ? ICONS.sun : ICONS.moon;
   });
   $('#logout-btn').addEventListener('click', () => {
     clearConfig();

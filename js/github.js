@@ -1,6 +1,14 @@
-import { getToken } from './auth.js?v=9';
+import { getToken, logout, needsRefresh, refreshToken } from './auth.js?v=10';
 
 const API = 'https://api.github.com';
+
+// ── Rate Limit Tracking ──
+let rateLimitRemaining = null;
+let rateLimitReset = null;
+
+export function getRateLimit() {
+  return { remaining: rateLimitRemaining, reset: rateLimitReset };
+}
 
 function headers() {
   return {
@@ -9,8 +17,35 @@ function headers() {
   };
 }
 
+async function apiFetch(url, opts = {}) {
+  // Proactively refresh token if close to expiry
+  if (needsRefresh()) await refreshToken();
+
+  const res = await fetch(url, { ...opts, headers: { ...headers(), ...opts.headers } });
+
+  // Track rate limits
+  const remaining = res.headers.get('X-RateLimit-Remaining');
+  const reset = res.headers.get('X-RateLimit-Reset');
+  if (remaining !== null) rateLimitRemaining = parseInt(remaining);
+  if (reset !== null) rateLimitReset = parseInt(reset) * 1000;
+
+  // Auto-logout on 401
+  if (res.status === 401) {
+    logout();
+    throw new Error('Session expired — please log in again');
+  }
+
+  // Rate limit exceeded
+  if (res.status === 403 && rateLimitRemaining === 0) {
+    const waitMin = Math.ceil((rateLimitReset - Date.now()) / 60000);
+    throw new Error(`GitHub API rate limit exceeded. Resets in ${waitMin} minutes.`);
+  }
+
+  return res;
+}
+
 export async function getUser() {
-  const res = await fetch(`${API}/user`, { headers: headers() });
+  const res = await apiFetch(`${API}/user`);
   if (!res.ok) throw new Error('Failed to fetch user');
   return res.json();
 }
@@ -19,9 +54,7 @@ export async function listRepos() {
   const repos = [];
   let page = 1;
   while (true) {
-    const res = await fetch(`${API}/user/repos?per_page=100&page=${page}&sort=updated`, {
-      headers: headers(),
-    });
+    const res = await apiFetch(`${API}/user/repos?per_page=100&page=${page}&sort=updated`);
     if (!res.ok) throw new Error('Failed to fetch repos');
     const data = await res.json();
     if (data.length === 0) break;
@@ -33,27 +66,20 @@ export async function listRepos() {
 }
 
 export async function getRepoInfo(owner, repo) {
-  const res = await fetch(`${API}/repos/${owner}/${repo}`, { headers: headers() });
+  const res = await apiFetch(`${API}/repos/${owner}/${repo}`);
   if (!res.ok) throw new Error('Failed to fetch repo info');
   return res.json();
 }
 
 export async function batchUpload(owner, repo, branch, files, message) {
-  // Git Data API: create blobs → get current tree → build new tree → create commit → update ref
-  // This creates a single commit for all files (1 push instead of N)
-
   // 1. Get the current commit SHA for the branch
-  const refRes = await fetch(`${API}/repos/${owner}/${repo}/git/ref/heads/${branch}`, {
-    headers: headers(),
-  });
+  const refRes = await apiFetch(`${API}/repos/${owner}/${repo}/git/ref/heads/${branch}`);
   if (!refRes.ok) throw new Error('Failed to get branch ref');
   const refData = await refRes.json();
   const baseSha = refData.object.sha;
 
   // 2. Get the base tree
-  const commitRes = await fetch(`${API}/repos/${owner}/${repo}/git/commits/${baseSha}`, {
-    headers: headers(),
-  });
+  const commitRes = await apiFetch(`${API}/repos/${owner}/${repo}/git/commits/${baseSha}`);
   if (!commitRes.ok) throw new Error('Failed to get base commit');
   const commitData = await commitRes.json();
   const baseTreeSha = commitData.tree.sha;
@@ -61,9 +87,8 @@ export async function batchUpload(owner, repo, branch, files, message) {
   // 3. Create blobs for each file
   const treeItems = [];
   for (const file of files) {
-    const blobRes = await fetch(`${API}/repos/${owner}/${repo}/git/blobs`, {
+    const blobRes = await apiFetch(`${API}/repos/${owner}/${repo}/git/blobs`, {
       method: 'POST',
-      headers: headers(),
       body: JSON.stringify({ content: file.base64, encoding: 'base64' }),
     });
     if (!blobRes.ok) throw new Error(`Failed to create blob for ${file.path}`);
@@ -77,18 +102,16 @@ export async function batchUpload(owner, repo, branch, files, message) {
   }
 
   // 4. Create new tree
-  const treeRes = await fetch(`${API}/repos/${owner}/${repo}/git/trees`, {
+  const treeRes = await apiFetch(`${API}/repos/${owner}/${repo}/git/trees`, {
     method: 'POST',
-    headers: headers(),
     body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems }),
   });
   if (!treeRes.ok) throw new Error('Failed to create tree');
   const treeData = await treeRes.json();
 
   // 5. Create commit
-  const newCommitRes = await fetch(`${API}/repos/${owner}/${repo}/git/commits`, {
+  const newCommitRes = await apiFetch(`${API}/repos/${owner}/${repo}/git/commits`, {
     method: 'POST',
-    headers: headers(),
     body: JSON.stringify({
       message,
       tree: treeData.sha,
@@ -99,9 +122,8 @@ export async function batchUpload(owner, repo, branch, files, message) {
   const newCommitData = await newCommitRes.json();
 
   // 6. Update branch ref
-  const updateRes = await fetch(`${API}/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
+  const updateRes = await apiFetch(`${API}/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
     method: 'PATCH',
-    headers: headers(),
     body: JSON.stringify({ sha: newCommitData.sha }),
   });
   if (!updateRes.ok) throw new Error('Failed to update branch');
@@ -109,13 +131,13 @@ export async function batchUpload(owner, repo, branch, files, message) {
   return newCommitData;
 }
 
-export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB (GitHub enforced limit)
+export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
 export async function listFiles(owner, repo, path = '') {
   const endpoint = path
     ? `${API}/repos/${owner}/${repo}/contents/${path}`
     : `${API}/repos/${owner}/${repo}/contents`;
-  const res = await fetch(endpoint, { headers: headers() });
+  const res = await apiFetch(endpoint);
   if (!res.ok) {
     if (res.status === 404) return [];
     throw new Error('Failed to list files');
@@ -132,9 +154,8 @@ export async function uploadFile(owner, repo, path, base64Content, message) {
   };
   if (existing) body.sha = existing;
 
-  const res = await fetch(`${API}/repos/${owner}/${repo}/contents/${path}`, {
+  const res = await apiFetch(`${API}/repos/${owner}/${repo}/contents/${path}`, {
     method: 'PUT',
-    headers: headers(),
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -145,9 +166,8 @@ export async function uploadFile(owner, repo, path, base64Content, message) {
 }
 
 export async function deleteFile(owner, repo, path, sha, message) {
-  const res = await fetch(`${API}/repos/${owner}/${repo}/contents/${path}`, {
+  const res = await apiFetch(`${API}/repos/${owner}/${repo}/contents/${path}`, {
     method: 'DELETE',
-    headers: headers(),
     body: JSON.stringify({
       message: message || `Delete ${path}`,
       sha,
@@ -158,9 +178,7 @@ export async function deleteFile(owner, repo, path, sha, message) {
 }
 
 async function getFileSha(owner, repo, path) {
-  const res = await fetch(`${API}/repos/${owner}/${repo}/contents/${path}`, {
-    headers: headers(),
-  });
+  const res = await apiFetch(`${API}/repos/${owner}/${repo}/contents/${path}`);
   if (res.status === 404) return null;
   if (!res.ok) return null;
   const data = await res.json();
@@ -196,29 +214,30 @@ export const CDN_PROVIDERS = [
 
 export async function renameFile(owner, repo, oldPath, newPath, message) {
   // GitHub API has no rename — fetch content, create at new path, delete old
-  const res = await fetch(`${API}/repos/${owner}/${repo}/contents/${oldPath}`, {
-    headers: headers(),
-  });
+  const res = await apiFetch(`${API}/repos/${owner}/${repo}/contents/${oldPath}`);
   if (!res.ok) throw new Error('Failed to fetch file for rename');
   const data = await res.json();
 
-  await uploadFile(owner, repo, newPath, data.content.replace(/\n/g, ''), message || `Rename ${oldPath} to ${newPath}`);
-  await deleteFile(owner, repo, oldPath, data.sha, message || `Rename ${oldPath} to ${newPath}`);
+  const renameMsg = message || `Rename ${oldPath} to ${newPath}`;
+  await uploadFile(owner, repo, newPath, data.content.replace(/\n/g, ''), renameMsg);
+
+  try {
+    await deleteFile(owner, repo, oldPath, data.sha, renameMsg);
+  } catch (err) {
+    // Upload succeeded but delete failed — file is duplicated
+    throw new Error(`Renamed to ${newPath} but failed to delete original: ${err.message}`);
+  }
 }
 
 export async function getCommits(owner, repo, path, page = 1) {
   const params = new URLSearchParams({ path, per_page: '30', page: String(page) });
-  const res = await fetch(`${API}/repos/${owner}/${repo}/commits?${params}`, {
-    headers: headers(),
-  });
+  const res = await apiFetch(`${API}/repos/${owner}/${repo}/commits?${params}`);
   if (!res.ok) throw new Error('Failed to fetch history');
   return res.json();
 }
 
 export async function getCommitDetail(owner, repo, sha) {
-  const res = await fetch(`${API}/repos/${owner}/${repo}/commits/${sha}`, {
-    headers: headers(),
-  });
+  const res = await apiFetch(`${API}/repos/${owner}/${repo}/commits/${sha}`);
   if (!res.ok) throw new Error('Failed to fetch commit');
   return res.json();
 }
