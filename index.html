@@ -23,6 +23,9 @@
     <div></div>
   </header>
 
+  <!-- Hide landing instantly if user has a token (avoid flash) -->
+  <script>if(localStorage.getItem('gitassets_token')){document.write('<style>#landing{display:none}#app{display:block!important}</style>')}</script>
+
   <!-- Landing page (static HTML, hidden by JS when logged in) -->
   <div class="landing" id="landing">
     <nav class="landing-nav">

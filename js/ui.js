@@ -451,7 +451,7 @@ function createFileCard(file, config, index) {
         const fname = oldPath.split('/').pop();
         const newPath = `${file.path}/${fname}`;
         try {
-          await renameFile(config.owner, config.repo, oldPath, newPath, `Move ${fname} to ${file.name}/`);
+          await renameFile(config.owner, config.repo, oldPath, newPath, `Move ${fname} to ${file.name}/ (via GitAssets)`);
           moved++;
         } catch (err) {
           showToast(`Failed to move ${fname}: ${err.message}`, 'error');
@@ -1037,7 +1037,7 @@ function setupNewFolder(config) {
       overlay.remove();
       try {
         const path = `${currentPath}/${name}/.gitkeep`;
-        await uploadFile(config.owner, config.repo, path, btoa(''), `Create folder ${name}`);
+        await uploadFile(config.owner, config.repo, path, btoa(''), `Create folder ${name} (via GitAssets)`);
         showToast(`Created folder ${name}`);
         await loadFiles(config);
       } catch (err) {
@@ -1596,7 +1596,7 @@ async function commitStagedFiles(message) {
   const defaultMsg = files.length === 1
     ? `Upload ${files[0].file.name}`
     : `Upload ${files.length} files`;
-  const commitMsg = message || defaultMsg;
+  const commitMsg = (message || defaultMsg) + ' (via GitAssets)';
 
   const bar = $('#upload-bar');
   const fill = $('#upload-fill');

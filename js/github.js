@@ -149,7 +149,7 @@ export async function listFiles(owner, repo, path = '') {
 export async function uploadFile(owner, repo, path, base64Content, message) {
   const existing = await getFileSha(owner, repo, path);
   const body = {
-    message: message || `Upload ${path}`,
+    message: message || `Upload ${path} (via GitAssets)`,
     content: base64Content,
   };
   if (existing) body.sha = existing;
@@ -169,7 +169,7 @@ export async function deleteFile(owner, repo, path, sha, message) {
   const res = await apiFetch(`${API}/repos/${owner}/${repo}/contents/${path}`, {
     method: 'DELETE',
     body: JSON.stringify({
-      message: message || `Delete ${path}`,
+      message: message || `Delete ${path} (via GitAssets)`,
       sha,
     }),
   });
@@ -218,7 +218,7 @@ export async function renameFile(owner, repo, oldPath, newPath, message) {
   if (!res.ok) throw new Error('Failed to fetch file for rename');
   const data = await res.json();
 
-  const renameMsg = message || `Rename ${oldPath} to ${newPath}`;
+  const renameMsg = message || `Rename ${oldPath} to ${newPath} (via GitAssets)`;
   await uploadFile(owner, repo, newPath, data.content.replace(/\n/g, ''), renameMsg);
 
   try {
