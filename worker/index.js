@@ -45,7 +45,7 @@ async function handleCallback(url, request, env) {
   const state = url.searchParams.get('state');
 
   if (!code) {
-    return Response.redirect(`${env.FRONTEND_URL}#error=missing_code`, 302);
+    return Response.redirect(`${env.FRONTEND_URL}/app#error=missing_code`, 302);
   }
 
   // Validate CSRF state parameter
@@ -72,7 +72,7 @@ async function handleCallback(url, request, env) {
 
   if (data.error) {
     return Response.redirect(
-      `${env.FRONTEND_URL}#error=${encodeURIComponent(data.error_description || data.error)}`,
+      `${env.FRONTEND_URL}/app#error=${encodeURIComponent(data.error_description || data.error)}`,
       302
     );
   }
@@ -85,7 +85,7 @@ async function handleCallback(url, request, env) {
   });
 
   const headers = new Headers({
-    Location: `${env.FRONTEND_URL}#${fragment}`,
+    Location: `${env.FRONTEND_URL}/app#${fragment}`,
     'Set-Cookie': 'oauth_state=; HttpOnly; Secure; SameSite=Lax; Max-Age=0; Path=/',
   });
   return new Response(null, { status: 302, headers });
