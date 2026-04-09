@@ -26,9 +26,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare deploy directory
+        run: |
+          mkdir _site
+          cp -r index.html app css js favicon* apple-touch-icon.png web-app-manifest-*.png site.webmanifest oembed.json CNAME _site/ 2>/dev/null || true
+          [ -f favicon.svg ] && cp favicon.svg _site/ || true
+          [ -f favicon.ico ] && cp favicon.ico _site/ || true
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
