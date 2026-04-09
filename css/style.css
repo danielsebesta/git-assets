@@ -594,6 +594,134 @@ video.file-thumb {
 .staging-input:focus { outline: none; border-color: var(--primary); }
 
 .staging-actions { display: flex; gap: 8px; }
+.staging-card-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+/* ── Compress Modal ── */
+.compress-modal { max-width: 560px; width: 94%; }
+
+.compress-preview { margin: 12px 0; }
+
+.compress-compare {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  user-select: none;
+  touch-action: none;
+}
+
+.compress-compare {
+  aspect-ratio: auto;
+}
+
+.compress-img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  background: repeating-conic-gradient(var(--surface-raised) 0% 25%, var(--bg) 0% 50%) 0 0 / 12px 12px;
+}
+
+.compress-img-original {
+  position: relative;
+}
+
+.compress-img-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.compress-img-wrapper .compress-img {
+  width: auto;
+  min-width: var(--compare-width, 100%);
+  max-height: 320px;
+  object-fit: contain;
+}
+
+.compress-slider-handle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3px;
+  height: 100%;
+  background: var(--primary);
+  cursor: ew-resize;
+  z-index: 2;
+  transform: translateX(-50%);
+}
+
+.compress-slider-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--bg);
+  box-shadow: var(--shadow-md);
+}
+
+.compress-label {
+  position: absolute;
+  bottom: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  pointer-events: none;
+}
+.compress-label-left { left: 8px; }
+.compress-label-right { right: 8px; }
+
+.compress-sizes {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.compress-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.compress-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.compress-control label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.compress-control select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: var(--font);
+}
+
+.compress-control input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
 
 /* ── Context Menu ── */
 .context-menu {

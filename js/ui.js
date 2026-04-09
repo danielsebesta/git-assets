@@ -1,7 +1,7 @@
 import { login, logout, getToken } from './auth.js?v=11';
 import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=11';
 import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=11';
-import { compressImage } from './compress.js?v=11';
+import { compressImage, compressPreview, getSupportedFormats, FORMATS } from './compress.js?v=11';
 import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=11';
 
 // ── Logo ──
@@ -1268,20 +1268,17 @@ async function stageFiles(fileList) {
       showToast(`${file.name} already exists — will overwrite`, 'error');
     }
 
-    let result;
-    try {
-      result = await compressImage(file);
-    } catch (err) {
-      showToast(`Failed to process ${file.name}: ${err.message}`, 'error');
-      continue;
-    }
+    const isImage = file.type.startsWith('image/') && file.type !== 'image/svg+xml';
     stagedFiles.push({
-      file: result.file,
-      originalFile: result.converted ? file : null,
-      preview: URL.createObjectURL(result.file),
-      converted: result.converted,
-      originalSize: result.originalSize,
-      savings: result.savings,
+      file,
+      originalFile: file,
+      preview: URL.createObjectURL(file),
+      converted: false,
+      originalSize: file.size,
+      savings: 0,
+      compressible: isImage,
+      format: 'original',
+      quality: 0.85,
     });
     renderStagingArea();
   }
@@ -1329,6 +1326,7 @@ function renderStagingArea() {
     const savingsHtml = staged.converted
       ? `<span class="staging-savings">-${staged.savings}% (was ${formatSize(staged.originalSize)})</span>`
       : '';
+    const formatLabel = staged.converted ? staged.format.toUpperCase() : '';
 
     card.innerHTML = `
       ${isImage ? `<img class="staging-thumb" src="${staged.preview}" />` : `<div class="staging-thumb-placeholder">${ICONS.file}</div>`}
@@ -1336,9 +1334,23 @@ function renderStagingArea() {
         <span class="staging-name" title="${staged.file.name}">${staged.file.name}</span>
         <span class="staging-file-size">${formatSize(staged.file.size)} ${savingsHtml}</span>
       </div>
-      <button class="btn-icon staging-remove" data-index="${i}" title="Remove">${ICONS.x}</button>
+      <div class="staging-card-actions">
+        ${staged.compressible ? `<button class="btn-icon staging-compress" data-index="${i}" title="Compress settings">${ICONS.image}</button>` : ''}
+        <button class="btn-icon staging-remove" data-index="${i}" title="Remove">${ICONS.x}</button>
+      </div>
     `;
     grid.appendChild(card);
+
+    // Click thumbnail to open compress modal
+    if (staged.compressible && isImage) {
+      const thumb = card.querySelector('.staging-thumb');
+      thumb.style.cursor = 'pointer';
+      thumb.addEventListener('click', () => showCompressModal(i));
+    }
+  });
+
+  grid.querySelectorAll('.staging-compress').forEach((btn) => {
+    btn.addEventListener('click', () => showCompressModal(parseInt(btn.dataset.index)));
   });
 
   grid.querySelectorAll('.staging-remove').forEach((btn) => {
@@ -1366,6 +1378,195 @@ function renderStagingArea() {
       const msg = $('#commit-msg').value.trim();
       commitStagedFiles(msg);
     }
+  });
+}
+
+// ── Compress Modal ──
+
+async function showCompressModal(index) {
+  const staged = stagedFiles[index];
+  if (!staged || !staged.compressible) return;
+
+  const original = staged.originalFile;
+  const originalUrl = URL.createObjectURL(original);
+  const formats = await getSupportedFormats();
+
+  let currentFormat = staged.format || 'original';
+  let currentQuality = staged.quality ?? 0.85;
+  let compressedUrl = staged.converted ? staged.preview : originalUrl;
+  let compressedSize = staged.file.size;
+  let debounceTimer = null;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal compress-modal">
+      <div class="history-header">
+        <h3>Compress — ${escapeHtml(original.name)}</h3>
+        <button class="btn-icon history-close">${ICONS.x}</button>
+      </div>
+
+      <div class="compress-preview">
+        <div class="compress-compare" id="compress-compare">
+          <img class="compress-img compress-img-original" src="${originalUrl}" alt="Original" />
+          <div class="compress-img-wrapper" id="compress-clip" style="width:50%;">
+            <img class="compress-img compress-img-result" id="compress-result-img" src="${compressedUrl}" alt="Compressed" />
+          </div>
+          <div class="compress-slider-handle" id="compress-handle"></div>
+          <div class="compress-label compress-label-left">Original</div>
+          <div class="compress-label compress-label-right" id="compress-label-right">Compressed</div>
+        </div>
+      </div>
+
+      <div class="compress-sizes" id="compress-sizes">
+        <span>Original: <strong>${formatSize(original.size)}</strong></span>
+        <span id="compress-result-size">${staged.converted ? `Compressed: <strong>${formatSize(compressedSize)}</strong> <span class="staging-savings">(-${staged.savings}%)</span>` : 'No compression'}</span>
+      </div>
+
+      <div class="compress-controls">
+        <div class="compress-control">
+          <label for="compress-format">Format</label>
+          <select id="compress-format" class="staging-input">
+            ${formats.map((f) => `<option value="${f.id}" ${f.id === currentFormat ? 'selected' : ''}>${f.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="compress-control" id="quality-control" ${currentFormat === 'original' || currentFormat === 'png' ? 'style="display:none"' : ''}>
+          <label for="compress-quality">Quality: <span id="quality-value">${Math.round(currentQuality * 100)}%</span></label>
+          <input type="range" id="compress-quality" min="1" max="100" value="${Math.round(currentQuality * 100)}" />
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-sm" id="compress-cancel">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="compress-apply">Apply</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  trapFocus(overlay);
+
+  overlay.querySelector('.history-close').addEventListener('click', () => { cleanup(); overlay.remove(); });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) { cleanup(); overlay.remove(); } });
+
+  // Set result image width to match container after layout
+  const compare = overlay.querySelector('#compress-compare');
+  const handle = overlay.querySelector('#compress-handle');
+  const clip = overlay.querySelector('#compress-clip');
+
+  requestAnimationFrame(() => {
+    const w = compare.offsetWidth;
+    clip.querySelector('.compress-img').style.width = w + 'px';
+  });
+
+  // Comparison slider drag
+  let dragging = false;
+  const onMove = (e) => {
+    if (!dragging) return;
+    const rect = compare.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    clip.style.width = `${pct}%`;
+    handle.style.left = `${pct}%`;
+  };
+  handle.addEventListener('mousedown', () => { dragging = true; });
+  handle.addEventListener('touchstart', () => { dragging = true; }, { passive: true });
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: true });
+  document.addEventListener('mouseup', () => { dragging = false; });
+  document.addEventListener('touchend', () => { dragging = false; });
+
+  const resultImg = overlay.querySelector('#compress-result-img');
+  const resultSizeEl = overlay.querySelector('#compress-result-size');
+  const qualityControl = overlay.querySelector('#quality-control');
+  const qualitySlider = overlay.querySelector('#compress-quality');
+  const qualityValue = overlay.querySelector('#quality-value');
+  const formatSelect = overlay.querySelector('#compress-format');
+  const labelRight = overlay.querySelector('#compress-label-right');
+
+  let tempUrl = null;
+
+  async function updatePreview() {
+    const fmt = formatSelect.value;
+    const q = parseInt(qualitySlider.value) / 100;
+    currentFormat = fmt;
+    currentQuality = q;
+
+    if (fmt === 'original') {
+      if (tempUrl) { URL.revokeObjectURL(tempUrl); tempUrl = null; }
+      resultImg.src = originalUrl;
+      resultSizeEl.innerHTML = 'No compression';
+      labelRight.textContent = 'Original';
+      compressedSize = original.size;
+      return;
+    }
+
+    resultSizeEl.innerHTML = '<span class="spinner" style="width:12px;height:12px;"></span>';
+    try {
+      const preview = await compressPreview(original, { quality: q, format: fmt });
+      if (tempUrl) URL.revokeObjectURL(tempUrl);
+      tempUrl = preview.url;
+      resultImg.src = preview.url;
+      resultImg.style.width = compare.offsetWidth + 'px';
+      compressedSize = preview.size;
+
+      if (preview.converted) {
+        const pct = Math.round((1 - preview.size / original.size) * 100);
+        resultSizeEl.innerHTML = `Compressed: <strong>${formatSize(preview.size)}</strong> <span class="staging-savings">(-${pct}%)</span>`;
+        labelRight.textContent = fmt.toUpperCase();
+      } else {
+        resultSizeEl.innerHTML = `${formatSize(preview.size)} (no savings — keeping original)`;
+        labelRight.textContent = 'Original';
+      }
+    } catch {
+      resultSizeEl.innerHTML = 'Compression failed';
+    }
+  }
+
+  formatSelect.addEventListener('change', () => {
+    const fmt = formatSelect.value;
+    const fmtDef = FORMATS.find((f) => f.id === fmt);
+    qualityControl.style.display = (fmt === 'original' || !fmtDef?.lossy) ? 'none' : '';
+    updatePreview();
+  });
+
+  qualitySlider.addEventListener('input', () => {
+    qualityValue.textContent = `${qualitySlider.value}%`;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(updatePreview, 200);
+  });
+
+  function cleanup() {
+    URL.revokeObjectURL(originalUrl);
+    if (tempUrl) URL.revokeObjectURL(tempUrl);
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchmove', onMove);
+  }
+
+  overlay.querySelector('#compress-cancel').addEventListener('click', () => {
+    cleanup();
+    overlay.remove();
+  });
+
+  overlay.querySelector('#compress-apply').addEventListener('click', async () => {
+    const fmt = formatSelect.value;
+    const q = parseInt(qualitySlider.value) / 100;
+
+    try {
+      const result = await compressImage(staged.originalFile, { quality: q, format: fmt });
+      URL.revokeObjectURL(stagedFiles[index].preview);
+      stagedFiles[index].file = result.file;
+      stagedFiles[index].preview = URL.createObjectURL(result.file);
+      stagedFiles[index].converted = result.converted;
+      stagedFiles[index].originalSize = result.originalSize;
+      stagedFiles[index].savings = result.savings || 0;
+      stagedFiles[index].format = fmt;
+      stagedFiles[index].quality = q;
+      renderStagingArea();
+    } catch (err) {
+      showToast(`Compression failed: ${err.message}`, 'error');
+    }
+    cleanup();
+    overlay.remove();
   });
 }
 
