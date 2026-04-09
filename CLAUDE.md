@@ -14,59 +14,75 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture
 
 ```
-Frontend (GitHub Pages)  →  GitHub API (direct, client-side)  →  GitHub Repo (storage)
-                                                                      ↓
-                                                      jsDelivr CDN (public delivery)
+Landing (/)  →  static HTML, no JS framework
+App (/app)   →  GitHub API (direct, client-side)  →  GitHub Repo (storage)
+                                                          ↓
+                                                jsDelivr CDN (public delivery)
 
-Author's Cloudflare Worker (shared, auth only)
-  └── handles OAuth login + token exchange, nothing else
-  └── end users do NOT need to deploy their own Worker
+Cloudflare Worker (auth only)
+  └── handles GitHub App OAuth login, token exchange, and refresh
+  └── configurable via js/env.js (single WORKER_URL)
 ```
 
-- **Frontend:** Vanilla HTML/CSS/JS (no build step, no framework). Static SPA on GitHub Pages. All file operations (upload, delete, list, URL generation) happen client-side via GitHub API.
-- **Backend (auth only):** A single Cloudflare Worker hosted by the project author. Handles GitHub OAuth token exchange only. End users never touch this.
-- **Storage:** User's own GitHub repository, assets stored under `_assets/` (underscore prefix makes Jekyll/GitHub Pages ignore this folder, so assets are NOT served via Pages — only via jsDelivr/CDN)
+- **Frontend:** Vanilla HTML/CSS/JS (no build step, no framework). Two pages: landing (`/`) and app (`/app`). All file operations happen client-side via GitHub API.
+- **Backend (auth only):** A Cloudflare Worker. Handles GitHub App OAuth token exchange and refresh only.
+- **Storage:** User's own GitHub repository. Files can be stored anywhere in the repo.
 - **CDN:** jsDelivr at `https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/path/to/file`
-
-## User Onboarding Flow
-
-1. User forks the repo
-2. Enables GitHub Pages
-3. Opens their page → clicks "Login with GitHub"
-4. Auto-detects their fork as storage repo (or picks from list)
-5. Done — upload, manage, copy CDN URLs
-
-No env vars, no config files, no Worker deployment needed for end users.
-
-## Authentication
-
-- GitHub OAuth via the author's centrally-hosted Worker
-- Worker endpoints: `GET /login` (redirect to GitHub), `GET /callback` (exchange code → token)
-- Token returned to frontend via URL fragment, stored in localStorage
-- All subsequent GitHub API calls use the token client-side
 
 ## Repo Structure
 
 ```
-index.html          — SPA entry point
-css/style.css       — All styles (dark theme, GitHub-inspired)
+index.html          — Landing page (static, no app code)
+app/index.html      — App page (loads JS, shows spinner → setup/dashboard)
+css/
+  style.css         — App styles (dark/light theme)
+  landing.css       — Landing page styles (animations, hero, sections)
 js/
-  app.js            — Init, routing between login/setup/dashboard
-  auth.js           — OAuth redirect, token extraction, localStorage
-  github.js         — GitHub API client (list, upload, delete, URL helpers)
-  config.js         — Repo auto-detect, setup wizard, localStorage config
-  ui.js             — DOM rendering (login, setup, file grid, modals, toasts)
+  env.js            — Self-host config (WORKER_URL — the only hardcoded URL)
+  app.js            — Init, auth check, routing between setup/dashboard
+  auth.js           — GitHub App OAuth, token refresh, localStorage
+  github.js         — GitHub API client (list, upload, delete, rename, batch, create repo)
+  config.js         — Repo picker logic, favorites, recents, localStorage config
+  ui.js             — DOM rendering (setup wizard, dashboard, file grid, modals, toasts)
+  compress.js       — Client-side image compression (WebP, AVIF, JPEG, PNG)
+  selection.js      — OS-style file selection (click, shift, ctrl)
+oembed.json         — oEmbed discovery
+site.webmanifest    — PWA manifest
 worker/
-  index.js          — Cloudflare Worker (OAuth only)
+  index.js          — Cloudflare Worker (OAuth login, callback, refresh)
   wrangler.toml     — Worker deployment config
+.github/workflows/
+  pages.yml         — GitHub Actions deploy (frontend files only)
 ```
+
+## Page Routing
+
+- `/` — Landing page. Logged-in users (token in localStorage) redirect to `/app`.
+- `/app` — App. Not logged in → redirects to OAuth login. Logged in → setup wizard or dashboard.
+- Login links on landing use `WORKER_URL` from `js/env.js` (set dynamically via JS module).
+
+## Authentication
+
+- **GitHub App OAuth** (not OAuth App) with refresh tokens
+- Worker endpoints: `GET /login`, `GET /callback`, `POST /refresh`
+- Callback redirects to `/app#access_token=...&refresh_token=...&expires_in=...`
+- Tokens stored in localStorage, proactively refreshed before expiry
+- `js/auth.js` imports `WORKER_URL` from `js/env.js`
+
+## Self-Hosting
+
+Only two things to change:
+
+1. **`js/env.js`** — set `WORKER_URL` to your Cloudflare Worker URL
+2. **`worker/wrangler.toml`** — set `FRONTEND_URL` and `WORKER_URL` vars, configure your domain
+
+No other files contain instance-specific URLs. Meta tags use relative paths.
 
 ## Development
 
-No build step. Open `index.html` in a browser or serve with any static server:
+No build step. Serve with any static server:
 
 ```bash
-cd /path/to/git-assets
 python3 -m http.server 8000
 # or
 npx serve .
@@ -79,19 +95,29 @@ npx wrangler dev    # local dev
 npx wrangler deploy # deploy to Cloudflare
 ```
 
-Worker secrets (set via `wrangler secret put` or Cloudflare dashboard):
-- `GITHUB_CLIENT_ID` — from GitHub OAuth App
-- `GITHUB_CLIENT_SECRET` — from GitHub OAuth App
-- `WORKER_URL` — deployed Worker URL
-- `FRONTEND_URL` — GitHub Pages URL
+Worker secrets (set via `wrangler secret put`):
+- `GITHUB_CLIENT_ID` — from GitHub App
+- `GITHUB_CLIENT_SECRET` — from GitHub App
+
+## Key Features
+
+- **File management:** Upload, delete, rename, move, batch operations, folder creation
+- **Image compression:** Client-side via OffscreenCanvas, before/after comparison slider, format selection (WebP/AVIF/JPEG/PNG), quality control
+- **File previews:** Images, video, audio, PDF, text/code files inline
+- **Multi-format output:** Copy CDN URL, HTML snippet, Markdown snippet
+- **Multiple CDN providers:** jsDelivr (default), GitHub Raw, GitHack, Statically
+- **Repo management:** Create new repos, switch repos, public/private detection with warnings
+- **File history:** Git commit log per file, version comparison
+- **OS-style selection:** Click, Shift+click, Ctrl+click for multi-select
+- **Dark/light theme**
 
 ## Key Design Decisions
 
-- **Zero-config for end users:** The author hosts the OAuth Worker. Users just fork + enable Pages.
-- **Minimal backend surface:** Worker does auth only. All GitHub API calls happen client-side.
 - **No build step:** Vanilla JS with ES modules. No bundler, no transpiler.
-- **Auto-detect repo:** After login, automatically finds user's fork of git-assets. Fallback to manual repo picker.
+- **Single config file:** `js/env.js` is the only file with a hardcoded URL.
+- **Landing/App split:** Landing page (`/`) is pure static HTML for SEO. App (`/app`) loads JS.
 - **Token stays client-side:** Never sent to any backend except GitHub's API directly.
+- **GitHub App (not OAuth App):** Supports refresh tokens, granular permissions.
 
 ## Non-Goals
 
