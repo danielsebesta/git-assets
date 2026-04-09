@@ -124,7 +124,7 @@ body {
   text-decoration: none;
 }
 
-.btn:hover { background: var(--surface-raised); border-color: var(--border-hover); text-decoration: none; }
+.btn:hover { background: var(--surface-raised); border-color: var(--border-hover); text-decoration: none; text-decoration-thickness: 1px; }
 
 .btn-primary {
   background: var(--primary);
