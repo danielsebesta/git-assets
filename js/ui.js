@@ -1,8 +1,8 @@
-import { login, logout, getToken } from './auth.js?v=10';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=10';
-import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=10';
-import { compressImage } from './compress.js?v=10';
-import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=10';
+import { login, logout, getToken } from './auth.js?v=11';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=11';
+import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=11';
+import { compressImage } from './compress.js?v=11';
+import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=11';
 
 // ── Logo ──
 const LOGO_SVG = `<svg viewBox="0 0 131.914 132.292" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M34.381 178.86c-2.113-.309-3.476-.715-4.92-1.466-3.455-1.797-5.949-4.92-7.035-8.807l-.308-1.105-.03-33.825c-.028-30-.011-33.942.148-34.86.842-4.883 4.434-9.04 9.18-10.627 2.004-.67 1.487-.644 13.717-.69 7.906-.03 11.62-.004 12.426.088a13.6 13.6 0 0 1 7.955 3.762c1.13 1.101 1.904 2.109 2.558 3.327.69 1.286.917 1.926 1.52 4.29l.547 2.14 2.615-2.953c1.438-1.625 3.849-4.352 5.357-6.062l2.743-3.109-.22-.702c-.946-3.043-.173-6.715 1.934-9.18 1.365-1.598 3.022-2.629 5.182-3.224.573-.157 1.125-.199 2.427-.182.927.012 1.83.038 2.005.057.291.033.946-.673 7.297-7.864 4.908-5.557 6.955-7.953 6.902-8.079-.238-.563-.527-1.938-.589-2.804-.173-2.425.684-5.038 2.274-6.931 1.214-1.445 2.589-2.383 4.463-3.043 1.181-.417 1.195-.418 3.105-.414 1.78.004 1.989.028 2.906.33 3.566 1.172 6.115 4.028 6.79 7.611 1.069 5.661-2.896 10.988-8.664 11.642-1.203.136-2.722 0-3.817-.34l-.713-.222-6.488 7.342c-3.569 4.038-6.448 7.358-6.397 7.377.05.02 2.2-.098 4.779-.261 2.578-.164 8.924-.56 14.103-.88 15.323-.947 16.958-1.051 16.976-1.078.009-.014.22-.417.47-.897.613-1.176 2.412-2.99 3.651-3.684 2.723-1.522 5.942-1.72 8.777-.536 1.043.435 2.493 1.445 3.275 2.28 1.807 1.932 2.705 4.18 2.71 6.786.007 4.47-2.808 8.22-7.148 9.519-.9.27-1.265.315-2.615.323-1.82.011-2.645-.16-4.167-.865-1.817-.843-3.454-2.288-4.319-3.812a24 24 0 0 0-.528-.899c-.11-.162-1.851-.074-17.204.874-19.353 1.196-18.535 1.136-18.535 1.346 0 .363-1.212 2.509-1.844 3.267-1.238 1.483-3.13 2.675-5.079 3.2-1.663.448-4.332.312-5.873-.3-.137-.054-1.443 1.354-5.034 5.425l-4.85 5.497 16.775.062c15.166.055 16.87.08 17.776.26 2.783.549 5.25 1.854 7.193 3.803 2.2 2.21 3.579 5.011 3.946 8.023.1.813.125 7.47.097 25.282l-.039 24.178-.275 1.046c-.662 2.514-1.741 4.505-3.394 6.26-1.982 2.104-4.195 3.358-7.253 4.112-.76.187-3.282.201-38.881.217-20.938.009-38.2-.002-38.36-.025m76.376-9.53c.917-.434 1.484-.913 1.951-1.647.772-1.214.722.635.689-25.606l-.03-23.77-.38-.771c-.481-.977-1.493-1.943-2.435-2.323l-.672-.272H72.392c-35.777 0-37.515.01-38.086.21a4.74 4.74 0 0 0-2.852 2.725l-.27.669-.033 23.306c-.023 16.43.004 23.526.094 24.05.306 1.794 1.705 3.33 3.401 3.736.206.049 17.244.081 37.862.072l37.488-.018zM32.52 106.154c1.574-.403 3.278-.45 16.42-.452 8.76-.002 12.873-.04 12.873-.122 0-.36-1.45-5.843-1.679-6.345-.513-1.129-1.601-2.053-2.847-2.417-.556-.163-1.904-.185-11.4-.185-9.556 0-10.838.022-11.399.187-1.7.504-2.915 1.852-3.236 3.588-.07.377-.127 1.911-.127 3.41v2.723l.262-.082c.144-.044.654-.182 1.133-.305" transform="translate(-22.077 -46.596)"/></svg>`;
@@ -91,116 +91,32 @@ export function showToast(msg, type = 'success') {
 // ── Login Screen (Landing Page) ──
 
 export function renderLogin() {
-  // Hide the app header on landing — we render our own
+  // Show static landing, hide app
+  $('#landing').style.display = '';
+  $('#app').style.display = 'none';
   $('#header').style.display = 'none';
 
-  $('#app').innerHTML = `
-    <div class="landing">
-      <!-- Nav -->
-      <nav class="landing-nav">
-        <a class="landing-nav-logo" href="#">${LOGO_SVG} GitAssets</a>
-        <div class="landing-nav-right">
-          <a href="https://github.com/danielsebesta/git-assets" class="landing-nav-link" target="_blank" rel="noopener">GitHub</a>
-          <button class="btn btn-sm btn-icon" id="landing-theme-btn" title="Toggle theme" aria-label="Toggle theme">${getTheme() === 'dark' ? ICONS.sun : ICONS.moon}</button>
-          <button class="btn-cta btn-cta-sm" id="login-btn-top">${GITHUB_ICON} Sign in</button>
-        </div>
-      </nav>
+  // Update theme icon to match current theme
+  const themeBtn = $('#landing-theme-btn');
+  themeBtn.innerHTML = getTheme() === 'dark' ? ICONS.sun : ICONS.moon;
 
-      <!-- Hero -->
-      <section class="landing-hero">
-        <div class="landing-hero-badge">Free &amp; open source</div>
-        <h1 class="landing-hero-title">Upload to GitHub.<br/><span class="landing-hero-accent">Get CDN links instantly.</span></h1>
-        <p class="landing-hero-sub">Manage images and assets in any GitHub repo.<br/>Serve them globally via jsDelivr CDN. No backend, no config.</p>
-        <div class="landing-hero-actions">
-          <button class="btn-cta" id="login-btn">${GITHUB_ICON} Connect GitHub</button>
-        </div>
-        <p class="landing-hero-note">Works with any public or private repo you have push access to.</p>
-      </section>
-
-      <!-- How it works -->
-      <section class="landing-section">
-        <h2 class="landing-section-title">Three steps. That's it.</h2>
-        <div class="landing-steps">
-          <div class="landing-step">
-            <div class="landing-step-num">1</div>
-            <h3>Connect</h3>
-            <p>Sign in with GitHub and pick any repository — or create a new one for your assets.</p>
-          </div>
-          <div class="landing-step">
-            <div class="landing-step-num">2</div>
-            <h3>Upload</h3>
-            <p>Drag & drop files, paste from clipboard, or upload entire folders. Images auto-compress to WebP.</p>
-          </div>
-          <div class="landing-step">
-            <div class="landing-step-num">3</div>
-            <h3>Use</h3>
-            <p>Copy the CDN link — ready for your blog, README, docs, or any project. Served via jsDelivr edge network.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Features -->
-      <section class="landing-section">
-        <h2 class="landing-section-title">Built for developers</h2>
-        <div class="landing-features">
-          <div class="landing-feature">
-            <div class="landing-feature-icon">${ICONS.zap}</div>
-            <h3>Instant CDN</h3>
-            <p>Files served via jsDelivr with edge caching worldwide. Copy-ready URLs, HTML, and Markdown snippets.</p>
-          </div>
-          <div class="landing-feature">
-            <div class="landing-feature-icon">${ICONS.package}</div>
-            <h3>Batch upload</h3>
-            <p>Upload multiple files as a single Git commit. Drag entire folders. Paste screenshots with Ctrl+V.</p>
-          </div>
-          <div class="landing-feature">
-            <div class="landing-feature-icon">${ICONS.image}</div>
-            <h3>Auto optimization</h3>
-            <p>Images automatically compress to WebP before upload — smaller files, faster loads, zero effort.</p>
-          </div>
-          <div class="landing-feature">
-            <div class="landing-feature-icon">${ICONS.shield}</div>
-            <h3>Your repo, your data</h3>
-            <p>Files live in your own GitHub repository. No vendor lock-in, no third-party storage. Full Git history.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Self-host -->
-      <section class="landing-section landing-selfhost">
-        <div class="landing-selfhost-inner">
-          <h2 class="landing-section-title">Self-host option</h2>
-          <p>GitAssets is fully open source under MIT license. Fork the repo and host your own instance — the frontend is just static HTML/CSS/JS on GitHub Pages. The only backend is a tiny Cloudflare Worker for OAuth.</p>
-          <a href="https://github.com/danielsebesta/git-assets" class="btn-cta btn-cta-outline" target="_blank" rel="noopener">${GITHUB_ICON} View on GitHub</a>
-        </div>
-      </section>
-
-      <!-- Footer -->
-      <footer class="landing-footer">
-        <span>GitAssets</span>
-        <span class="landing-footer-sep">&middot;</span>
-        <a href="https://github.com/danielsebesta/git-assets" target="_blank" rel="noopener">GitHub</a>
-        <span class="landing-footer-sep">&middot;</span>
-        <span>MIT License</span>
-      </footer>
-    </div>
-  `;
-
-  // Event listeners
+  // Attach event listeners
   const loginAction = () => login();
   $('#login-btn').addEventListener('click', loginAction);
   $('#login-btn-top').addEventListener('click', loginAction);
-  $('#landing-theme-btn').addEventListener('click', () => {
+  themeBtn.addEventListener('click', () => {
     const next = getTheme() === 'dark' ? 'light' : 'dark';
     setTheme(next);
-    $('#landing-theme-btn').innerHTML = next === 'dark' ? ICONS.sun : ICONS.moon;
+    themeBtn.innerHTML = next === 'dark' ? ICONS.sun : ICONS.moon;
   });
 }
 
 // ── Setup Wizard ──
 
 export async function renderSetup() {
+  $('#landing').style.display = 'none';
   const app = $('#app');
+  app.style.display = '';
   app.innerHTML = `
     <div class="setup-screen">
       <h2>Pick a repository</h2>
@@ -273,6 +189,8 @@ export async function renderDashboard() {
   const config = getConfig();
   if (!config) return renderSetup();
 
+  $('#landing').style.display = 'none';
+  $('#app').style.display = '';
   currentUser = currentUser || await getUser();
 
   $('#app').innerHTML = `
