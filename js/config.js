@@ -98,7 +98,11 @@ export function getRepoList(repos) {
       updatedAt: r.updated_at,
       sizeKB: r.size || 0,
     }));
-  // Public first, private last
-  list.sort((a, b) => a.isPrivate - b.isPrivate);
+  // Public first, then by last activity, then by stars
+  list.sort((a, b) =>
+    (a.isPrivate - b.isPrivate) ||
+    (new Date(b.updatedAt) - new Date(a.updatedAt)) ||
+    (b.stars - a.stars)
+  );
   return list;
 }

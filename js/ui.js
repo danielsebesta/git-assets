@@ -195,6 +195,14 @@ export async function renderSetup() {
         const size = r.sizeKB >= 1024 ? `${(r.sizeKB / 1024).toFixed(1)} MB` : `${r.sizeKB} KB`;
         meta.push(size);
       }
+      if (r.updatedAt) {
+        const days = Math.floor((Date.now() - new Date(r.updatedAt)) / 86400000);
+        if (days === 0) meta.push('today');
+        else if (days === 1) meta.push('yesterday');
+        else if (days < 30) meta.push(`${days}d ago`);
+        else if (days < 365) meta.push(`${Math.floor(days / 30)}mo ago`);
+        else meta.push(`${Math.floor(days / 365)}y ago`);
+      }
 
       li.innerHTML = `
         <img class="setup-repo-avatar" src="${r.avatarUrl}&s=40" alt="" width="20" height="20" loading="lazy" />
