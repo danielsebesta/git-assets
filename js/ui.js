@@ -146,6 +146,13 @@ function setCompressDefaults(opts) {
   localStorage.setItem(COMPRESS_KEY, JSON.stringify(opts));
 }
 
+function updateDropzoneHint() {
+  const hint = $('#dropzone-hint');
+  if (!hint) return;
+  const c = getCompressDefaults();
+  hint.textContent = c.enabled ? `Images auto-compress to ${c.format.toUpperCase()} at ${c.quality}%` : 'Drag & drop or paste files';
+}
+
 function getDefaultCdnProvider() {
   const id = getDefaultCdn();
   return CDN_PROVIDERS.find((p) => p.id === id) || CDN_PROVIDERS[0];
@@ -327,7 +334,7 @@ export async function renderDashboard() {
       </div>
       <div class="dropzone" id="dropzone">
         <div class="dropzone-text">Drop files here, paste from clipboard, or click Upload</div>
-        <div class="dropzone-hint">${(() => { const c = getCompressDefaults(); return c.enabled ? `Images auto-compress to ${c.format.toUpperCase()} at ${c.quality}%` : 'Drag & drop or paste files'; })()}</div>
+        <div class="dropzone-hint" id="dropzone-hint"></div>
       </div>
       <div id="file-area">
         <div style="text-align:center;padding:40px;"><span class="spinner"></span></div>
@@ -355,6 +362,7 @@ export async function renderDashboard() {
   setupStatsButton(config);
   await loadFiles(config);
   loadRepoSize(config);
+  updateDropzoneHint();
   renderRecentUploads(config);
   showWalkthrough();
 }
@@ -2489,6 +2497,7 @@ function showUserMenu(user) {
         c.enabled = !c.enabled;
         setCompressDefaults(c);
         menu.remove();
+        updateDropzoneHint();
         showToast(c.enabled ? 'Auto-compress enabled' : 'Auto-compress disabled');
       } else if (action === 'cdn') {
         setDefaultCdn(item.dataset.cdn);
@@ -2513,6 +2522,7 @@ function showUserMenu(user) {
       const c = getCompressDefaults();
       c.format = umFormat.value;
       setCompressDefaults(c);
+      updateDropzoneHint();
     });
   }
   if (umQuality) {
@@ -2522,6 +2532,7 @@ function showUserMenu(user) {
       const c = getCompressDefaults();
       c.quality = parseInt(umQuality.value);
       setCompressDefaults(c);
+      updateDropzoneHint();
     });
   }
 
