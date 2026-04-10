@@ -17,8 +17,7 @@ export function logout() {
   localStorage.removeItem(TOKEN_TS_KEY);
   localStorage.removeItem(TOKEN_EXP_KEY);
   localStorage.removeItem(REFRESH_KEY);
-  window.location.hash = '';
-  window.location.reload();
+  window.location.href = '/';
 }
 
 export function getToken() {
