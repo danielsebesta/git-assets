@@ -3,7 +3,6 @@ export const FORMATS = [
   { id: 'webp', label: 'WebP', mime: 'image/webp', lossy: true },
   { id: 'jpeg', label: 'JPEG', mime: 'image/jpeg', lossy: true },
   { id: 'png', label: 'PNG', mime: 'image/png', lossy: false },
-  { id: 'avif', label: 'AVIF', mime: 'image/avif', lossy: true },
 ];
 
 // Check browser support for each format
@@ -28,17 +27,34 @@ export async function getSupportedFormats() {
   return supported;
 }
 
-export async function compressImage(file, { quality = 0.85, format = 'webp' } = {}) {
+export async function compressImage(file, { quality = 0.85, format = 'webp', maxWidth = 0, maxHeight = 0, scale = 100 } = {}) {
   if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
     return { file, converted: false };
   }
 
-  if (format === 'original') {
+  if (format === 'original' && scale === 100 && !maxWidth && !maxHeight) {
     return { file, converted: false };
   }
 
   const bitmap = await createImageBitmap(file);
-  const { width, height } = bitmap;
+  let { width, height } = bitmap;
+
+  // Apply scale
+  if (scale > 0 && scale < 100) {
+    const s = scale / 100;
+    width = Math.round(width * s);
+    height = Math.round(height * s);
+  }
+
+  // Apply max dimensions (maintain aspect ratio)
+  if (maxWidth > 0 && width > maxWidth) {
+    height = Math.round(height * (maxWidth / width));
+    width = maxWidth;
+  }
+  if (maxHeight > 0 && height > maxHeight) {
+    width = Math.round(width * (maxHeight / height));
+    height = maxHeight;
+  }
 
   const canvas = new OffscreenCanvas(width, height);
   const ctx = canvas.getContext('2d');
@@ -46,18 +62,24 @@ export async function compressImage(file, { quality = 0.85, format = 'webp' } = 
   bitmap.close();
 
   const fmt = FORMATS.find((f) => f.id === format);
-  const mimeType = fmt?.mime || 'image/webp';
+  const mimeType = format === 'original' ? (file.type || 'image/png') : (fmt?.mime || 'image/webp');
   const opts = fmt?.lossy ? { type: mimeType, quality } : { type: mimeType };
   const blob = await canvas.convertToBlob(opts);
 
-  // Only use compressed version if it's actually smaller
-  if (blob.size >= file.size) {
-    return { file, converted: false, originalSize: file.size, compressedSize: file.size, savings: 0 };
+  // Only use compressed version if it's actually smaller (skip check if resized)
+  const resized = scale < 100 || maxWidth > 0 || maxHeight > 0;
+  if (!resized && blob.size >= file.size) {
+    return { file, converted: false, originalSize: file.size, compressedSize: file.size, savings: 0, width, height };
   }
 
-  const ext = format === 'jpeg' ? 'jpg' : format;
-  const baseName = file.name.replace(/\.[^.]+$/, '');
-  const newName = `${baseName}.${ext}`;
+  let ext, newName;
+  if (format === 'original') {
+    newName = file.name;
+  } else {
+    ext = format === 'jpeg' ? 'jpg' : format;
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+    newName = `${baseName}.${ext}`;
+  }
   const newFile = new File([blob], newName, { type: mimeType });
 
   return {
@@ -66,18 +88,22 @@ export async function compressImage(file, { quality = 0.85, format = 'webp' } = 
     originalSize: file.size,
     compressedSize: newFile.size,
     savings: Math.round((1 - newFile.size / file.size) * 100),
+    width,
+    height,
   };
 }
 
 // Generate a preview blob for comparison (returns object URL)
-export async function compressPreview(file, { quality = 0.85, format = 'webp' } = {}) {
-  const result = await compressImage(file, { quality, format });
+export async function compressPreview(file, opts = {}) {
+  const result = await compressImage(file, { quality: 0.85, format: 'webp', ...opts });
   return {
     url: URL.createObjectURL(result.file),
     size: result.file.size,
     originalSize: file.size,
     converted: result.converted,
     savings: result.savings || 0,
+    width: result.width,
+    height: result.height,
     file: result.file,
   };
 }

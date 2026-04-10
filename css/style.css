@@ -804,21 +804,56 @@ video.file-thumb {
 .staging-card-actions { display: flex; gap: 2px; flex-shrink: 0; }
 
 /* ── Compress Modal ── */
-.compress-modal { max-width: 560px; width: 94%; }
+.compress-modal { max-width: 600px; width: 94%; }
 
 .compress-preview { margin: 12px 0; }
+
+.compress-zoom-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.compress-zoom-btn {
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.compress-zoom-btn:hover { border-color: var(--border-hover); }
+
+.compress-zoom-level {
+  min-width: 36px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.compress-compare-wrapper {
+  overflow: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.compress-dims {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
 
 .compress-compare {
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
   user-select: none;
   touch-action: none;
-}
-
-.compress-compare {
-  aspect-ratio: auto;
+  transition: transform 0.15s ease;
+  transform-origin: center center;
 }
 
 .compress-img {

@@ -1435,9 +1435,18 @@ async function showCompressModal(index) {
 
   let currentFormat = staged.format || 'original';
   let currentQuality = staged.quality ?? 0.85;
+  let currentScale = staged.scale ?? 100;
+  let currentMaxWidth = staged.maxWidth ?? 0;
   let compressedUrl = staged.converted ? staged.preview : originalUrl;
   let compressedSize = staged.file.size;
   let debounceTimer = null;
+  let zoomLevel = 1;
+
+  // Get original dimensions
+  const origBitmap = await createImageBitmap(original);
+  const origW = origBitmap.width;
+  const origH = origBitmap.height;
+  origBitmap.close();
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -1449,19 +1458,27 @@ async function showCompressModal(index) {
       </div>
 
       <div class="compress-preview">
-        <div class="compress-compare" id="compress-compare">
-          <img class="compress-img compress-img-original" src="${originalUrl}" alt="Original" />
-          <div class="compress-img-wrapper" id="compress-clip" style="width:50%;">
-            <img class="compress-img compress-img-result" id="compress-result-img" src="${compressedUrl}" alt="Compressed" />
+        <div class="compress-zoom-bar">
+          <button class="btn-icon compress-zoom-btn" data-zoom="out" title="Zoom out">-</button>
+          <span class="compress-zoom-level" id="compress-zoom-label">100%</span>
+          <button class="btn-icon compress-zoom-btn" data-zoom="in" title="Zoom in">+</button>
+          <button class="btn-icon compress-zoom-btn" data-zoom="fit" title="Fit">Fit</button>
+        </div>
+        <div class="compress-compare-wrapper" id="compress-compare-wrapper">
+          <div class="compress-compare" id="compress-compare">
+            <img class="compress-img compress-img-original" src="${originalUrl}" alt="Original" />
+            <div class="compress-img-wrapper" id="compress-clip" style="width:50%;">
+              <img class="compress-img compress-img-result" id="compress-result-img" src="${compressedUrl}" alt="Compressed" />
+            </div>
+            <div class="compress-slider-handle" id="compress-handle"></div>
+            <div class="compress-label compress-label-left">Original</div>
+            <div class="compress-label compress-label-right" id="compress-label-right">Compressed</div>
           </div>
-          <div class="compress-slider-handle" id="compress-handle"></div>
-          <div class="compress-label compress-label-left">Original</div>
-          <div class="compress-label compress-label-right" id="compress-label-right">Compressed</div>
         </div>
       </div>
 
       <div class="compress-sizes" id="compress-sizes">
-        <span>Original: <strong>${formatSize(original.size)}</strong></span>
+        <span>Original: <strong>${formatSize(original.size)}</strong> <span class="compress-dims">${origW}×${origH}</span></span>
         <span id="compress-result-size">${staged.converted ? `Compressed: <strong>${formatSize(compressedSize)}</strong> <span class="staging-savings">(-${staged.savings}%)</span>` : 'No compression'}</span>
       </div>
 
@@ -1475,6 +1492,14 @@ async function showCompressModal(index) {
         <div class="compress-control" id="quality-control" ${currentFormat === 'original' || currentFormat === 'png' ? 'style="display:none"' : ''}>
           <label for="compress-quality">Quality: <span id="quality-value">${Math.round(currentQuality * 100)}%</span></label>
           <input type="range" id="compress-quality" min="1" max="100" value="${Math.round(currentQuality * 100)}" />
+        </div>
+        <div class="compress-control">
+          <label for="compress-scale">Scale: <span id="scale-value">${currentScale}%</span> <span class="compress-dims" id="scale-dims">${origW}×${origH}</span></label>
+          <input type="range" id="compress-scale" min="10" max="100" value="${currentScale}" />
+        </div>
+        <div class="compress-control">
+          <label for="compress-max-width">Max width: <span id="max-width-value">${currentMaxWidth || 'none'}</span></label>
+          <input type="range" id="compress-max-width" min="0" max="${origW}" value="${currentMaxWidth}" step="10" />
         </div>
       </div>
 
@@ -1524,16 +1549,63 @@ async function showCompressModal(index) {
   const qualityValue = overlay.querySelector('#quality-value');
   const formatSelect = overlay.querySelector('#compress-format');
   const labelRight = overlay.querySelector('#compress-label-right');
+  const scaleSlider = overlay.querySelector('#compress-scale');
+  const scaleValue = overlay.querySelector('#scale-value');
+  const scaleDims = overlay.querySelector('#scale-dims');
+  const maxWidthSlider = overlay.querySelector('#compress-max-width');
+  const maxWidthValue = overlay.querySelector('#max-width-value');
+  const zoomLabel = overlay.querySelector('#compress-zoom-label');
+  const compareEl = overlay.querySelector('#compress-compare');
+  const wrapper = overlay.querySelector('#compress-compare-wrapper');
+
+  // Zoom controls
+  overlay.querySelectorAll('.compress-zoom-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.zoom;
+      if (action === 'in') zoomLevel = Math.min(zoomLevel + 0.25, 4);
+      else if (action === 'out') zoomLevel = Math.max(zoomLevel - 0.25, 0.25);
+      else zoomLevel = 1;
+      compareEl.style.transform = `scale(${zoomLevel})`;
+      compareEl.style.transformOrigin = 'center center';
+      zoomLabel.textContent = `${Math.round(zoomLevel * 100)}%`;
+    });
+  });
+
+  // Mouse wheel zoom
+  wrapper.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    zoomLevel = Math.max(0.25, Math.min(4, zoomLevel + (e.deltaY < 0 ? 0.1 : -0.1)));
+    compareEl.style.transform = `scale(${zoomLevel})`;
+    zoomLabel.textContent = `${Math.round(zoomLevel * 100)}%`;
+  }, { passive: false });
 
   let tempUrl = null;
+
+  function updateScaleDims() {
+    const s = parseInt(scaleSlider.value) / 100;
+    let w = Math.round(origW * s);
+    let h = Math.round(origH * s);
+    const mw = parseInt(maxWidthSlider.value);
+    if (mw > 0 && w > mw) {
+      h = Math.round(h * (mw / w));
+      w = mw;
+    }
+    scaleDims.textContent = `${w}×${h}`;
+  }
 
   async function updatePreview() {
     const fmt = formatSelect.value;
     const q = parseInt(qualitySlider.value) / 100;
+    const sc = parseInt(scaleSlider.value);
+    const mw = parseInt(maxWidthSlider.value);
     currentFormat = fmt;
     currentQuality = q;
+    currentScale = sc;
+    currentMaxWidth = mw;
+    updateScaleDims();
 
-    if (fmt === 'original') {
+    const noChange = fmt === 'original' && sc === 100 && mw === 0;
+    if (noChange) {
       if (tempUrl) { URL.revokeObjectURL(tempUrl); tempUrl = null; }
       resultImg.src = originalUrl;
       resultSizeEl.innerHTML = 'No compression';
@@ -1544,19 +1616,20 @@ async function showCompressModal(index) {
 
     resultSizeEl.innerHTML = '<span class="spinner" style="width:12px;height:12px;"></span>';
     try {
-      const preview = await compressPreview(original, { quality: q, format: fmt });
+      const preview = await compressPreview(original, { quality: q, format: fmt, scale: sc, maxWidth: mw });
       if (tempUrl) URL.revokeObjectURL(tempUrl);
       tempUrl = preview.url;
       resultImg.src = preview.url;
       resultImg.style.width = compare.offsetWidth + 'px';
       compressedSize = preview.size;
 
-      if (preview.converted) {
+      const dimsText = preview.width ? ` (${preview.width}×${preview.height})` : '';
+      if (preview.converted || preview.size < original.size) {
         const pct = Math.round((1 - preview.size / original.size) * 100);
-        resultSizeEl.innerHTML = `Compressed: <strong>${formatSize(preview.size)}</strong> <span class="staging-savings">(-${pct}%)</span>`;
-        labelRight.textContent = fmt.toUpperCase();
+        resultSizeEl.innerHTML = `Compressed: <strong>${formatSize(preview.size)}</strong>${dimsText} <span class="staging-savings">(-${pct}%)</span>`;
+        labelRight.textContent = fmt === 'original' ? 'Resized' : fmt.toUpperCase();
       } else {
-        resultSizeEl.innerHTML = `${formatSize(preview.size)} (no savings — keeping original)`;
+        resultSizeEl.innerHTML = `${formatSize(preview.size)}${dimsText} (no savings — keeping original)`;
         labelRight.textContent = 'Original';
       }
     } catch {
@@ -1577,6 +1650,21 @@ async function showCompressModal(index) {
     debounceTimer = setTimeout(updatePreview, 200);
   });
 
+  scaleSlider.addEventListener('input', () => {
+    scaleValue.textContent = `${scaleSlider.value}%`;
+    updateScaleDims();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(updatePreview, 200);
+  });
+
+  maxWidthSlider.addEventListener('input', () => {
+    const v = parseInt(maxWidthSlider.value);
+    maxWidthValue.textContent = v === 0 ? 'none' : `${v}px`;
+    updateScaleDims();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(updatePreview, 200);
+  });
+
   function cleanup() {
     URL.revokeObjectURL(originalUrl);
     if (tempUrl) URL.revokeObjectURL(tempUrl);
@@ -1592,9 +1680,11 @@ async function showCompressModal(index) {
   overlay.querySelector('#compress-apply').addEventListener('click', async () => {
     const fmt = formatSelect.value;
     const q = parseInt(qualitySlider.value) / 100;
+    const sc = parseInt(scaleSlider.value);
+    const mw = parseInt(maxWidthSlider.value);
 
     try {
-      const result = await compressImage(staged.originalFile, { quality: q, format: fmt });
+      const result = await compressImage(staged.originalFile, { quality: q, format: fmt, scale: sc, maxWidth: mw });
       URL.revokeObjectURL(stagedFiles[index].preview);
       stagedFiles[index].file = result.file;
       stagedFiles[index].preview = URL.createObjectURL(result.file);
@@ -1603,6 +1693,8 @@ async function showCompressModal(index) {
       stagedFiles[index].savings = result.savings || 0;
       stagedFiles[index].format = fmt;
       stagedFiles[index].quality = q;
+      stagedFiles[index].scale = sc;
+      stagedFiles[index].maxWidth = mw;
       renderStagingArea();
     } catch (err) {
       showToast(`Compression failed: ${err.message}`, 'error');
