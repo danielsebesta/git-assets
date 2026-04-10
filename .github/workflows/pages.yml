@@ -29,7 +29,7 @@ jobs:
       - name: Prepare deploy directory
         run: |
           mkdir _site
-          cp -r index.html app css js favicon* apple-touch-icon.png web-app-manifest-*.png site.webmanifest oembed.json CNAME _site/ 2>/dev/null || true
+          cp -r index.html app css js docs favicon* apple-touch-icon.png web-app-manifest-*.png site.webmanifest oembed.json CNAME _site/ 2>/dev/null || true
           [ -f favicon.svg ] && cp favicon.svg _site/ || true
           [ -f favicon.ico ] && cp favicon.ico _site/ || true
       - uses: actions/configure-pages@v5
