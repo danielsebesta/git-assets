@@ -93,18 +93,88 @@ body {
   gap: 12px;
 }
 
-.header-user {
+.header-user-btn {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: none;
   color: var(--text-muted);
   font-size: 14px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.header-user-btn:hover {
+  background: var(--surface-raised);
+  border-color: var(--border);
+}
+
+.header-username { color: var(--text); font-weight: 500; }
+
+.header-chevron {
+  color: var(--text-faint);
+  flex-shrink: 0;
 }
 
 .header-avatar {
   width: 28px;
   height: 28px;
   border-radius: 50%;
+}
+
+/* ── User Menu ── */
+.user-menu {
+  min-width: 220px;
+}
+
+.user-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.user-menu-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.user-menu-login {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.user-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.user-menu-section-label {
+  padding: 6px 12px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.user-menu-cdn-item {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.user-menu-danger {
+  color: var(--danger);
+}
+
+.user-menu-danger:hover {
+  background: rgba(255, 68, 68, 0.08);
 }
 
 /* ── Buttons ── */
@@ -846,13 +916,16 @@ video.file-thumb {
 }
 
 .cdn-menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   padding: 8px 12px;
   background: none;
   border: none;
   color: var(--text);
   font-size: 13px;
+  font-family: var(--font);
   text-align: left;
   cursor: pointer;
   border-radius: 4px;

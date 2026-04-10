@@ -1,5 +1,5 @@
 import { login, logout, getToken } from './auth.js?v=13';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, createRepo, MAX_FILE_SIZE, getCdnUrl, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=13';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, createRepo, MAX_FILE_SIZE, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=13';
 import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=13';
 import { compressImage, compressPreview, getSupportedFormats, FORMATS } from './compress.js?v=13';
 import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=13';
@@ -30,6 +30,9 @@ const ICONS = {
   audio: icon('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', 20),
   code: icon('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>', 20),
   text: icon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>', 20),
+  logout: icon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'),
+  settings: icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>'),
+  check: icon('<polyline points="20 6 9 17 4 12"/>'),
 };
 
 // ── File Type Detection ──
@@ -95,6 +98,7 @@ const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 const THEME_KEY = 'gitassets_theme';
+const CDN_KEY = 'gitassets_default_cdn';
 
 function getTheme() {
   return localStorage.getItem(THEME_KEY) || 'dark';
@@ -105,6 +109,23 @@ function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = theme === 'dark' ? '#000000' : '#ffffff';
+}
+
+function getDefaultCdn() {
+  return localStorage.getItem(CDN_KEY) || 'jsdelivr';
+}
+
+function setDefaultCdn(id) {
+  localStorage.setItem(CDN_KEY, id);
+}
+
+function getDefaultCdnProvider() {
+  const id = getDefaultCdn();
+  return CDN_PROVIDERS.find((p) => p.id === id) || CDN_PROVIDERS[0];
+}
+
+function getDefaultCdnUrl(owner, repo, branch, path) {
+  return getDefaultCdnProvider().url(owner, repo, branch, path);
 }
 
 // Apply saved theme on load
@@ -616,10 +637,7 @@ function showContextMenu(x, y, file, config) {
   const ctxFileType = getFileType(file.name);
 
   const items = [
-    { label: multi ? `Copy ${sel.size} URLs (jsDelivr)` : 'Copy jsDelivr URL', action: 'copy-jsdelivr' },
-    { label: 'Copy all CDN URLs', action: 'copy-all' },
-    { label: 'Copy HTML snippet', action: 'copy-html' },
-    { label: 'Copy Markdown snippet', action: 'copy-md' },
+    { label: multi ? `Copy ${sel.size} URLs` : 'Copy URL', action: 'copy-default' },
     { divider: true },
     { label: 'Open URL panel', action: 'url-panel', hidden: multi },
     { label: 'Open in new tab', action: 'open-tab', hidden: multi },
@@ -674,44 +692,10 @@ function handleContextAction(action, file, config) {
   const paths = sel.size > 0 ? [...sel] : [file.path];
 
   switch (action) {
-    case 'copy-jsdelivr': {
-      const urls = paths.map((p) => getCdnUrl(config.owner, config.repo, config.branch, p)).join('\n');
+    case 'copy-default': {
+      const urls = paths.map((p) => getDefaultCdnUrl(config.owner, config.repo, config.branch, p)).join('\n');
       copyToClipboard(urls);
       showToast(`Copied ${paths.length} URL${paths.length > 1 ? 's' : ''}`);
-      break;
-    }
-    case 'copy-all': {
-      const all = paths.flatMap((p) =>
-        CDN_PROVIDERS.map((prov) => prov.url(config.owner, config.repo, config.branch, p))
-      ).join('\n');
-      copyToClipboard(all);
-      showToast('All CDN URLs copied');
-      break;
-    }
-    case 'copy-html': {
-      const html = paths.map((p) => {
-        const url = getCdnUrl(config.owner, config.repo, config.branch, p);
-        const name = p.split('/').pop();
-        const t = getFileType(name);
-        if (t === 'image') return `<img src="${url}" alt="${name}" />`;
-        if (t === 'video') return `<video src="${url}" controls></video>`;
-        if (t === 'audio') return `<audio src="${url}" controls></audio>`;
-        return `<a href="${url}">${name}</a>`;
-      }).join('\n');
-      copyToClipboard(html);
-      showToast('HTML copied');
-      break;
-    }
-    case 'copy-md': {
-      const md = paths.map((p) => {
-        const url = getCdnUrl(config.owner, config.repo, config.branch, p);
-        const name = p.split('/').pop();
-        return getFileType(name) === 'image'
-          ? `![${name}](${url})`
-          : `[${name}](${url})`;
-      }).join('\n');
-      copyToClipboard(md);
-      showToast('Markdown copied');
       break;
     }
     case 'url-panel':
@@ -759,13 +743,17 @@ function showUrlPanel(file, config) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
+  const defaultCdnId = getDefaultCdn();
   const urls = CDN_PROVIDERS.map((p) => ({
+    id: p.id,
     name: p.name,
     url: p.url(config.owner, config.repo, config.branch, file.path),
   }));
 
-  const primaryUrl = urls[0].url;
-  const rawUrl = urls[1].url;
+  const defaultProvider = urls.find((u) => u.id === defaultCdnId) || urls[0];
+  const primaryUrl = defaultProvider.url;
+  const altUrls = urls.filter((u) => u.id !== defaultProvider.id);
+  const rawUrl = CDN_PROVIDERS[1].url(config.owner, config.repo, config.branch, file.path);
   const safeName = escapeHtml(file.name);
 
   let htmlSnippet, mdSnippet;
@@ -796,8 +784,6 @@ function showUrlPanel(file, config) {
     previewHtml = `<pre class="url-panel-text-preview" id="text-preview-content"><span class="spinner"></span></pre>`;
   }
 
-  const altUrls = urls.slice(1);
-
   overlay.innerHTML = `
     <div class="modal url-panel">
       <div class="history-header">
@@ -807,10 +793,10 @@ function showUrlPanel(file, config) {
       ${previewHtml}
       <div class="url-panel-list">
         <div class="url-panel-item">
-          <span class="url-panel-label">${urls[0].name} (recommended)</span>
+          <span class="url-panel-label">${defaultProvider.name}</span>
           <div class="url-panel-row">
-            <code class="url-panel-url">${urls[0].url}</code>
-            <button class="btn btn-primary btn-sm url-panel-copy" data-url="${urls[0].url}">Copy</button>
+            <code class="url-panel-url">${primaryUrl}</code>
+            <button class="btn btn-primary btn-sm url-panel-copy" data-url="${primaryUrl}">Copy</button>
           </div>
         </div>
         <div class="url-panel-item">
@@ -1236,7 +1222,7 @@ function setupSelectionBar(config) {
     const sel = getSelected();
     if (sel.size === 0) return;
     const urls = [...sel].map((path) =>
-      getCdnUrl(config.owner, config.repo, config.branch, path)
+      getDefaultCdnUrl(config.owner, config.repo, config.branch, path)
     ).join('\n');
     copyToClipboard(urls);
     showToast(`Copied ${sel.size} URL${sel.size > 1 ? 's' : ''}`);
@@ -2194,7 +2180,7 @@ function renderRecentUploads(config) {
     <div class="recent-list">${recent.map((r) => {
       const name = r.path.split('/').pop();
       const rType = getFileType(name);
-      const url = getCdnUrl(r.owner, r.repo, r.branch, r.path);
+      const url = getDefaultCdnUrl(r.owner, r.repo, r.branch, r.path);
       const thumb = rType === 'image' ? getRawUrl(r.owner, r.repo, r.branch, r.path) : '';
       const ago = timeAgo(r.time);
       return `<div class="recent-item" data-url="${url}" title="${r.path}">
@@ -2282,7 +2268,6 @@ function formatSize(bytes) {
 export function renderHeader(user) {
   const header = $('#header');
   if (!user) {
-    // Landing page renders its own nav, hide the app header
     header.style.display = 'none';
     return;
   }
@@ -2290,21 +2275,87 @@ export function renderHeader(user) {
   header.innerHTML = `
     <a class="header-logo" href="#">${LOGO_SVG} GitAssets</a>
     <div class="header-right">
-      <span class="header-user">
+      <button class="header-user-btn" id="user-menu-btn" title="Settings">
         <img class="header-avatar" src="${user.avatar_url}" alt="${user.login}" />
-        ${user.login}
-      </span>
-      <button class="btn btn-sm btn-icon" id="theme-btn" title="Toggle theme">${getTheme() === 'dark' ? ICONS.sun : ICONS.moon}</button>
-      <button class="btn btn-sm" id="logout-btn">Logout</button>
+        <span class="header-username">${user.login}</span>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="header-chevron"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
     </div>
   `;
-  $('#theme-btn').addEventListener('click', () => {
-    const next = getTheme() === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    $('#theme-btn').innerHTML = next === 'dark' ? ICONS.sun : ICONS.moon;
+
+  $('#user-menu-btn').addEventListener('click', () => {
+    showUserMenu(user);
   });
-  $('#logout-btn').addEventListener('click', () => {
-    clearConfig();
-    logout();
+}
+
+function showUserMenu(user) {
+  document.querySelectorAll('.user-menu').forEach((m) => m.remove());
+
+  const theme = getTheme();
+  const defaultCdn = getDefaultCdn();
+  const menu = document.createElement('div');
+  menu.className = 'cdn-menu user-menu';
+
+  menu.innerHTML = `
+    <div class="user-menu-header">
+      <img class="header-avatar" src="${user.avatar_url}" alt="${user.login}" />
+      <div>
+        <div class="user-menu-name">${user.name || user.login}</div>
+        ${user.name ? `<div class="user-menu-login">${user.login}</div>` : ''}
+      </div>
+    </div>
+    <div class="user-menu-divider"></div>
+    <button class="cdn-menu-item" data-action="theme">
+      ${theme === 'dark' ? ICONS.sun : ICONS.moon}
+      <span>${theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+    </button>
+    <div class="user-menu-divider"></div>
+    <div class="user-menu-section-label">Default CDN</div>
+    ${CDN_PROVIDERS.map((p) => `
+      <button class="cdn-menu-item user-menu-cdn-item" data-action="cdn" data-cdn="${p.id}">
+        ${p.id === defaultCdn ? ICONS.check : '<span style="width:16px;display:inline-block;"></span>'}
+        <span>${p.name}</span>
+      </button>
+    `).join('')}
+    <div class="user-menu-divider"></div>
+    <button class="cdn-menu-item user-menu-danger" data-action="logout">
+      ${ICONS.logout}
+      <span>Log out</span>
+    </button>
+  `;
+
+  const btn = $('#user-menu-btn');
+  const rect = btn.getBoundingClientRect();
+  menu.style.top = `${rect.bottom + 6}px`;
+  menu.style.right = `${window.innerWidth - rect.right}px`;
+  document.body.appendChild(menu);
+
+  menu.querySelectorAll('.cdn-menu-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const action = item.dataset.action;
+
+      if (action === 'theme') {
+        const next = getTheme() === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+        menu.remove();
+      } else if (action === 'cdn') {
+        setDefaultCdn(item.dataset.cdn);
+        menu.remove();
+        showToast(`Default CDN set to ${CDN_PROVIDERS.find((p) => p.id === item.dataset.cdn).name}`);
+      } else if (action === 'logout') {
+        menu.remove();
+        clearConfig();
+        logout();
+      }
+    });
   });
+
+  const close = (e) => {
+    if (!menu.contains(e.target) && e.target !== btn) {
+      menu.remove();
+      document.removeEventListener('click', close);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', close), 0);
 }
