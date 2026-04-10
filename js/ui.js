@@ -1,6 +1,6 @@
 import { login, logout, getToken } from './auth.js?v=14';
 import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=14';
-import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=14';
+import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites } from './config.js?v=14';
 import { compressImage, compressPreview, getSupportedFormats, FORMATS } from './compress.js?v=14';
 import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=14';
 
@@ -364,7 +364,6 @@ export async function renderDashboard() {
   await loadFiles(config);
   loadRepoSize(config);
   updateDropzoneHint();
-  renderRecentUploads(config);
   showWalkthrough();
 }
 
@@ -949,7 +948,8 @@ function showDeleteModal(file, config) {
   overlay.innerHTML = `
     <div class="modal">
       <h3>Delete file</h3>
-      <p>Are you sure you want to delete <strong>${file.name}</strong>? This cannot be undone.</p>
+      <p>Are you sure you want to delete <strong>${file.name}</strong>?</p>
+      <p class="modal-warn">The file will remain publicly accessible in the repository's git history.</p>
       <div class="modal-actions">
         <button class="btn btn-sm" id="modal-cancel">Cancel</button>
         <button class="btn btn-sm btn-danger" id="modal-confirm">Delete</button>
@@ -1246,7 +1246,8 @@ function setupSelectionBar(config) {
     overlay.innerHTML = `
       <div class="modal">
         <h3>Delete ${count} file${count > 1 ? 's' : ''}</h3>
-        <p>Are you sure? This cannot be undone.</p>
+        <p>Are you sure?</p>
+        <p class="modal-warn">Files will remain publicly accessible in the repository's git history.</p>
         <div class="modal-actions">
           <button class="btn btn-sm" id="modal-cancel">Cancel</button>
           <button class="btn btn-sm btn-danger" id="modal-confirm">Delete ${count} file${count > 1 ? 's' : ''}</button>
@@ -1825,8 +1826,6 @@ async function commitStagedFiles(message) {
     await batchUpload(config.owner, config.repo, config.branch, batchFiles, commitMsg);
 
     files.forEach((s) => URL.revokeObjectURL(s.preview));
-    // Track recent uploads
-    batchFiles.forEach((bf) => addRecent(bf.path, config.owner, config.repo, config.branch));
     fill.style.width = '100%';
     status.textContent = `Uploaded ${files.length} file${files.length > 1 ? 's' : ''}`;
     stagedFiles = [];
@@ -2302,55 +2301,6 @@ async function showStats(config) {
   } catch (err) {
     overlay.querySelector('.modal').innerHTML = `<p style="color:var(--danger);padding:24px;">Error: ${err.message}</p>`;
   }
-}
-
-// ── Recent Uploads ──
-
-function renderRecentUploads(config) {
-  let section = $('#recent-uploads');
-  const recent = getRecent().filter((r) => r.owner === config.owner && r.repo === config.repo);
-
-  if (recent.length === 0) {
-    if (section) section.remove();
-    return;
-  }
-
-  if (!section) {
-    section = document.createElement('div');
-    section.id = 'recent-uploads';
-    section.className = 'recent-uploads';
-    const dashboard = $('.dashboard');
-    const fileArea = $('#file-area');
-    dashboard.insertBefore(section, fileArea);
-  }
-
-  section.innerHTML = `
-    <div class="recent-header">
-      <span class="recent-title">Recent uploads</span>
-      <button class="btn-icon" id="recent-dismiss" title="Dismiss">${ICONS.x}</button>
-    </div>
-    <div class="recent-list">${recent.map((r) => {
-      const name = r.path.split('/').pop();
-      const rType = getFileType(name);
-      const url = getDefaultCdnUrl(r.owner, r.repo, r.branch, r.path);
-      const thumb = rType === 'image' ? getRawUrl(r.owner, r.repo, r.branch, r.path) : '';
-      const ago = timeAgo(r.time);
-      return `<div class="recent-item" data-url="${url}" title="${r.path}">
-        ${thumb ? `<img class="recent-thumb" src="${thumb}" />` : `<span class="recent-icon">${getFileIcon(rType)}</span>`}
-        <span class="recent-name">${name}</span>
-        <span class="recent-time">${ago}</span>
-      </div>`;
-    }).join('')}</div>
-  `;
-
-  section.querySelector('#recent-dismiss').addEventListener('click', () => section.remove());
-
-  section.querySelectorAll('.recent-item').forEach((item) => {
-    item.addEventListener('click', () => {
-      copyToClipboard(item.dataset.url);
-      showToast('URL copied');
-    });
-  });
 }
 
 function timeAgo(ts) {
