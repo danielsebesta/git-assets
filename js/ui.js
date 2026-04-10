@@ -1,8 +1,9 @@
-import { login, logout, getToken } from './auth.js?v=14';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=14';
-import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites } from './config.js?v=14';
-import { compressImage, compressPreview, getSupportedFormats, FORMATS } from './compress.js?v=14';
-import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=14';
+import { login, logout, getToken } from './auth.js?v=15';
+import { S3_WORKER_URL } from './env.js?v=15';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=15';
+import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites } from './config.js?v=15';
+import { compressImage, compressPreview, getSupportedFormats, FORMATS } from './compress.js?v=15';
+import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=15';
 
 // ── Logo ──
 const LOGO_SVG = `<svg viewBox="0 0 131.914 132.292" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M34.381 178.86c-2.113-.309-3.476-.715-4.92-1.466-3.455-1.797-5.949-4.92-7.035-8.807l-.308-1.105-.03-33.825c-.028-30-.011-33.942.148-34.86.842-4.883 4.434-9.04 9.18-10.627 2.004-.67 1.487-.644 13.717-.69 7.906-.03 11.62-.004 12.426.088a13.6 13.6 0 0 1 7.955 3.762c1.13 1.101 1.904 2.109 2.558 3.327.69 1.286.917 1.926 1.52 4.29l.547 2.14 2.615-2.953c1.438-1.625 3.849-4.352 5.357-6.062l2.743-3.109-.22-.702c-.946-3.043-.173-6.715 1.934-9.18 1.365-1.598 3.022-2.629 5.182-3.224.573-.157 1.125-.199 2.427-.182.927.012 1.83.038 2.005.057.291.033.946-.673 7.297-7.864 4.908-5.557 6.955-7.953 6.902-8.079-.238-.563-.527-1.938-.589-2.804-.173-2.425.684-5.038 2.274-6.931 1.214-1.445 2.589-2.383 4.463-3.043 1.181-.417 1.195-.418 3.105-.414 1.78.004 1.989.028 2.906.33 3.566 1.172 6.115 4.028 6.79 7.611 1.069 5.661-2.896 10.988-8.664 11.642-1.203.136-2.722 0-3.817-.34l-.713-.222-6.488 7.342c-3.569 4.038-6.448 7.358-6.397 7.377.05.02 2.2-.098 4.779-.261 2.578-.164 8.924-.56 14.103-.88 15.323-.947 16.958-1.051 16.976-1.078.009-.014.22-.417.47-.897.613-1.176 2.412-2.99 3.651-3.684 2.723-1.522 5.942-1.72 8.777-.536 1.043.435 2.493 1.445 3.275 2.28 1.807 1.932 2.705 4.18 2.71 6.786.007 4.47-2.808 8.22-7.148 9.519-.9.27-1.265.315-2.615.323-1.82.011-2.645-.16-4.167-.865-1.817-.843-3.454-2.288-4.319-3.812a24 24 0 0 0-.528-.899c-.11-.162-1.851-.074-17.204.874-19.353 1.196-18.535 1.136-18.535 1.346 0 .363-1.212 2.509-1.844 3.267-1.238 1.483-3.13 2.675-5.079 3.2-1.663.448-4.332.312-5.873-.3-.137-.054-1.443 1.354-5.034 5.425l-4.85 5.497 16.775.062c15.166.055 16.87.08 17.776.26 2.783.549 5.25 1.854 7.193 3.803 2.2 2.21 3.579 5.011 3.946 8.023.1.813.125 7.47.097 25.282l-.039 24.178-.275 1.046c-.662 2.514-1.741 4.505-3.394 6.26-1.982 2.104-4.195 3.358-7.253 4.112-.76.187-3.282.201-38.881.217-20.938.009-38.2-.002-38.36-.025m76.376-9.53c.917-.434 1.484-.913 1.951-1.647.772-1.214.722.635.689-25.606l-.03-23.77-.38-.771c-.481-.977-1.493-1.943-2.435-2.323l-.672-.272H72.392c-35.777 0-37.515.01-38.086.21a4.74 4.74 0 0 0-2.852 2.725l-.27.669-.033 23.306c-.023 16.43.004 23.526.094 24.05.306 1.794 1.705 3.33 3.401 3.736.206.049 17.244.081 37.862.072l37.488-.018zM32.52 106.154c1.574-.403 3.278-.45 16.42-.452 8.76-.002 12.873-.04 12.873-.122 0-.36-1.45-5.843-1.679-6.345-.513-1.129-1.601-2.053-2.847-2.417-.556-.163-1.904-.185-11.4-.185-9.556 0-10.838.022-11.399.187-1.7.504-2.915 1.852-3.236 3.588-.07.377-.127 1.911-.127 3.41v2.723l.262-.082c.144-.044.654-.182 1.133-.305" transform="translate(-22.077 -46.596)"/></svg>`;
@@ -166,7 +167,7 @@ function getDefaultCdnUrl(owner, repo, branch, path) {
 // Apply saved theme on load
 setTheme(getTheme());
 
-export function showToast(msg, type = 'success') {
+export function showToast(msg, type = 'success', opts = {}) {
   const existing = $('.toast');
   if (existing) existing.remove();
 
@@ -175,8 +176,23 @@ export function showToast(msg, type = 'success') {
   toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', 'polite');
   toast.textContent = msg;
+
+  if (opts.undo) {
+    const btn = document.createElement('button');
+    btn.className = 'toast-undo';
+    btn.textContent = 'Undo';
+    btn.addEventListener('click', () => {
+      toast.remove();
+      opts.undo();
+    });
+    toast.appendChild(btn);
+  }
+
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  const duration = opts.duration || 3000;
+  const timer = setTimeout(() => toast.remove(), duration);
+  toast._timer = timer;
+  return toast;
 }
 
 // ── Login Screen (Landing Page) ──
@@ -328,6 +344,7 @@ export async function renderDashboard() {
           <div class="bulk-actions">
             <button class="btn btn-sm" id="bulk-select-all">Select all</button>
             <button class="btn btn-sm" id="bulk-copy">Copy URLs</button>
+            <button class="btn btn-sm" id="bulk-download">${icon('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>', 14)} Download</button>
             <button class="btn btn-sm btn-danger" id="bulk-delete">${ICONS.trash} Delete</button>
             <button class="btn-icon" id="bulk-clear" title="Clear selection">${ICONS.x}</button>
           </div>
@@ -650,6 +667,7 @@ function showContextMenu(x, y, file, config) {
     { label: 'Open URL panel', action: 'url-panel', hidden: multi },
     { label: 'Open in new tab', action: 'open-tab', hidden: multi },
     { label: 'Download', action: 'download', hidden: multi },
+    { label: `Download ${sel.size} as ZIP`, action: 'download-zip', hidden: !multi },
     { divider: true },
     { label: 'Rename', action: 'rename', hidden: multi },
     { label: `Batch rename (${sel.size})`, action: 'batch-rename', hidden: !multi },
@@ -722,6 +740,9 @@ function handleContextAction(action, file, config) {
       a.click();
       break;
     }
+    case 'download-zip':
+      $('#bulk-download').click();
+      break;
     case 'rename': {
       const nameEl = document.querySelector(`.file-card[data-path="${file.path}"] .file-name`);
       if (nameEl) startRename(nameEl, file, config);
@@ -964,13 +985,32 @@ function showDeleteModal(file, config) {
 
   overlay.querySelector('#modal-confirm').addEventListener('click', async () => {
     overlay.remove();
-    try {
-      await deleteFile(config.owner, config.repo, file.path, file.sha);
-      showToast(`Deleted ${file.name}`);
-      await loadFiles(config);
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
+    let cancelled = false;
+
+    // Remove card immediately for responsiveness
+    const card = document.querySelector(`.file-card[data-path="${file.path}"]`);
+    if (card) card.style.display = 'none';
+
+    const toast = showToast(`Deleted ${file.name}`, 'success', {
+      duration: 4000,
+      undo: () => {
+        cancelled = true;
+        if (card) card.style.display = '';
+        showToast('Delete cancelled');
+      },
+    });
+
+    // Wait for undo window, then actually delete
+    setTimeout(async () => {
+      if (cancelled) return;
+      try {
+        await deleteFile(config.owner, config.repo, file.path, file.sha);
+        await loadFiles(config);
+      } catch (err) {
+        if (card) card.style.display = '';
+        showToast(err.message, 'error');
+      }
+    }, 4000);
   });
 }
 
@@ -1144,6 +1184,24 @@ function setupKeyboardShortcuts(config) {
       $('#bulk-delete').click();
     }
 
+    // Ctrl+C — copy URLs of selected files
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c' && getSelected().size > 0) {
+      e.preventDefault();
+      const urls = [...getSelected()].map((path) =>
+        getDefaultCdnUrl(config.owner, config.repo, config.branch, path)
+      ).join('\n');
+      copyToClipboard(urls);
+      showToast(`Copied ${getSelected().size} URL${getSelected().size > 1 ? 's' : ''}`);
+    }
+
+    // Enter — open selected file URL panel (single) or first selected
+    if (e.key === 'Enter' && getSelected().size > 0) {
+      e.preventDefault();
+      const sel = [...getSelected()];
+      const file = currentFiles.find((f) => f.path === sel[0]);
+      if (file) showUrlPanel(file, config);
+    }
+
     // / — focus search
     if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
@@ -1235,6 +1293,48 @@ function setupSelectionBar(config) {
     ).join('\n');
     copyToClipboard(urls);
     showToast(`Copied ${sel.size} URL${sel.size > 1 ? 's' : ''}`);
+  });
+
+  $('#bulk-download').addEventListener('click', async () => {
+    const sel = getSelected();
+    if (sel.size === 0) return;
+    const paths = [...sel];
+
+    if (paths.length === 1) {
+      // Single file — direct download
+      const url = getRawUrl(config.owner, config.repo, config.branch, paths[0]);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = paths[0].split('/').pop();
+      a.click();
+      return;
+    }
+
+    // Multiple files — ZIP download
+    showToast('Preparing download...');
+    try {
+      const { default: JSZip } = await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm');
+      const zip = new JSZip();
+
+      for (const path of paths) {
+        const url = getRawUrl(config.owner, config.repo, config.branch, path);
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const name = path.split('/').pop();
+        zip.file(name, blob);
+      }
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(content);
+      a.download = `${config.repo}-assets.zip`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast(`Downloaded ${paths.length} files as ZIP`);
+    } catch (err) {
+      showToast(`Download failed: ${err.message}`, 'error');
+    }
   });
 
   $('#bulk-delete').addEventListener('click', () => {
@@ -2407,6 +2507,107 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// ── S3 Connection Panel ──
+
+function showS3Panel() {
+  const config = getConfig();
+  if (!config) return;
+  const token = getToken();
+  const endpoint = S3_WORKER_URL;
+  const bearer = `${config.owner}/${config.repo}:${token}`;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal s3-panel" style="max-width:520px;">
+      <div class="history-header">
+        <h3>S3 API Connection</h3>
+        <button class="btn-icon history-close">${ICONS.x}</button>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+        Use these credentials with any S3-compatible client.
+        <a href="/docs/" style="color:var(--text);text-decoration:underline;" target="_blank">Read the docs</a>
+      </p>
+      <div class="s3-fields">
+        <div class="s3-field">
+          <label class="s3-field-label">Endpoint</label>
+          <div class="s3-field-row">
+            <code class="s3-field-value">${endpoint}</code>
+            <button class="btn btn-sm s3-copy" data-value="${endpoint}">Copy</button>
+          </div>
+        </div>
+        <div class="s3-field">
+          <label class="s3-field-label">Bearer token</label>
+          <div class="s3-field-row">
+            <code class="s3-field-value s3-field-secret">${bearer.slice(0, 30)}...</code>
+            <button class="btn btn-sm s3-copy" data-value="${escapeHtml(bearer)}">Copy</button>
+          </div>
+        </div>
+        <div class="s3-field">
+          <label class="s3-field-label">Bucket (branch)</label>
+          <div class="s3-field-row">
+            <code class="s3-field-value">${config.branch || 'main'}</code>
+            <button class="btn btn-sm s3-copy" data-value="${config.branch || 'main'}">Copy</button>
+          </div>
+        </div>
+      </div>
+      <details class="s3-details">
+        <summary>AWS CLI / SDK credentials</summary>
+        <div class="s3-fields" style="margin-top:12px;">
+          <div class="s3-field">
+            <label class="s3-field-label">Access Key ID</label>
+            <div class="s3-field-row">
+              <code class="s3-field-value">${config.owner}/${config.repo}</code>
+              <button class="btn btn-sm s3-copy" data-value="${config.owner}/${config.repo}">Copy</button>
+            </div>
+          </div>
+          <div class="s3-field">
+            <label class="s3-field-label">Secret Access Key</label>
+            <div class="s3-field-row">
+              <code class="s3-field-value">unused</code>
+              <button class="btn btn-sm s3-copy" data-value="unused">Copy</button>
+            </div>
+          </div>
+          <div class="s3-field">
+            <label class="s3-field-label">Session Token (GitHub token)</label>
+            <div class="s3-field-row">
+              <code class="s3-field-value s3-field-secret">${token ? token.slice(0, 20) + '...' : ''}</code>
+              <button class="btn btn-sm s3-copy" data-value="${escapeHtml(token || '')}">Copy</button>
+            </div>
+          </div>
+          <div class="s3-field">
+            <label class="s3-field-label">Region</label>
+            <div class="s3-field-row">
+              <code class="s3-field-value">auto</code>
+              <button class="btn btn-sm s3-copy" data-value="auto">Copy</button>
+            </div>
+          </div>
+        </div>
+      </details>
+      <div class="s3-snippet">
+        <label class="s3-field-label">Quick test (cURL)</label>
+        <div class="s3-field-row">
+          <code class="s3-field-value" style="font-size:11px;word-break:break-all;">curl -H "Authorization: Bearer ${config.owner}/${config.repo}:..." ${endpoint}/${config.branch || 'main'}?list-type=2</code>
+          <button class="btn btn-sm s3-copy" data-value='curl -H "Authorization: Bearer ${bearer}" ${endpoint}/${config.branch || 'main'}?list-type=2'>Copy</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  trapFocus(overlay);
+
+  overlay.querySelector('.history-close').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  overlay.querySelectorAll('.s3-copy').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      copyToClipboard(btn.dataset.value);
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+    });
+  });
+}
+
 // ── Header ──
 
 export function renderHeader(user) {
@@ -2490,6 +2691,12 @@ function showUserMenu(user) {
       </button>
     `).join('')}
     <div class="user-menu-divider"></div>
+    <div class="user-menu-section-label">S3-Compatible API</div>
+    <button class="cdn-menu-item" data-action="s3-panel">
+      ${ICONS.link}
+      <span>Connection details</span>
+    </button>
+    <div class="user-menu-divider"></div>
     <button class="cdn-menu-item user-menu-danger" data-action="logout">
       ${ICONS.logout}
       <span>Log out</span>
@@ -2529,6 +2736,9 @@ function showUserMenu(user) {
         setDefaultCdn(item.dataset.cdn);
         menu.remove();
         showToast(`Default CDN set to ${CDN_PROVIDERS.find((p) => p.id === item.dataset.cdn).name}`);
+      } else if (action === 's3-panel') {
+        menu.remove();
+        showS3Panel();
       } else if (action === 'logout') {
         menu.remove();
         clearConfig();

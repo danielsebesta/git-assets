@@ -1,8 +1,8 @@
 import { WORKER_URL } from './env.js';
-import { isLoggedIn, handleAuthCallback, getToken } from './auth.js?v=14';
-import { getUser } from './github.js?v=14';
-import { getConfig } from './config.js?v=14';
-import { renderLogin, renderSetup, renderDashboard, renderHeader, showToast } from './ui.js?v=14';
+import { isLoggedIn, handleAuthCallback, getToken } from './auth.js?v=15';
+import { getUser } from './github.js?v=15';
+import { getConfig } from './config.js?v=15';
+import { renderLogin, renderSetup, renderDashboard, renderHeader, showToast } from './ui.js?v=15';
 
 async function init() {
   try {
