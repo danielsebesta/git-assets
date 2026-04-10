@@ -211,7 +211,7 @@ export async function renderSetup() {
   app.innerHTML = `
     <div class="setup-screen">
       <h2>Pick a repository</h2>
-      <p>Choose any repo to store your assets — or enter one manually.</p>
+      <p>Choose a public repo to store your assets.</p>
       <div class="setup-detecting"><span class="spinner"></span><span>Loading repositories...</span></div>
     </div>
   `;
