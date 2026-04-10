@@ -769,6 +769,9 @@ video.file-thumb {
   border-radius: var(--radius);
   padding: 16px;
   margin-bottom: 16px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .staging-header {
@@ -786,6 +789,8 @@ video.file-thumb {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .staging-card {
@@ -797,6 +802,8 @@ video.file-thumb {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   max-width: 240px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .staging-thumb {
@@ -821,6 +828,7 @@ video.file-thumb {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .staging-name {
