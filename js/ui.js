@@ -204,7 +204,7 @@ export async function renderSetup() {
     <div class="setup-screen">
       <h2>Pick a repository</h2>
       <p>Choose any repo to store your assets — or enter one manually.</p>
-      <div class="setup-detecting"><span class="spinner"></span> Loading your repos...</div>
+      <div class="setup-detecting"><span class="spinner"></span><span>Loading repositories...</span></div>
     </div>
   `;
 
@@ -295,10 +295,7 @@ export async function renderDashboard() {
         <div class="toolbar-right">
           <button class="toolbar-repo" id="change-repo-btn" title="Change repository">
             <span class="toolbar-repo-name">${config.owner}/${config.repo}</span>
-            <div class="storage-bar" id="storage-bar" title="Repository storage">
-              <div class="storage-bar-fill" id="storage-fill"></div>
-              <span class="storage-label" id="storage-label"></span>
-            </div>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="toolbar-actions">
             <button class="btn-icon" id="new-folder-btn" title="New folder">${ICONS.folderPlus}</button>
