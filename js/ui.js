@@ -33,6 +33,7 @@ const ICONS = {
   logout: icon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'),
   settings: icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>'),
   check: icon('<polyline points="20 6 9 17 4 12"/>'),
+  wand: icon('<path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h0"/><path d="M17.8 6.2 19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2 11 5"/>'),
   upload: icon('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'),
   folderPlus: icon('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>'),
   search: icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
@@ -1410,11 +1411,11 @@ function renderStagingArea() {
     card.innerHTML = `
       ${isImage ? `<img class="staging-thumb" src="${staged.preview}" />` : `<div class="staging-thumb-placeholder">${ICONS.file}</div>`}
       <div class="staging-info">
-        <span class="staging-name" title="${staged.file.name}">${staged.file.name}</span>
+        <span class="staging-name" data-index="${i}" title="Click to rename">${staged.file.name}</span>
         <span class="staging-file-size">${formatSize(staged.file.size)} ${savingsHtml}</span>
       </div>
       <div class="staging-card-actions">
-        ${staged.compressible ? `<button class="btn-icon staging-compress" data-index="${i}" title="Compress settings">${ICONS.image}</button>` : ''}
+        ${staged.compressible ? `<button class="btn-icon staging-compress" data-index="${i}" title="Compress settings">${ICONS.wand}</button>` : ''}
         <button class="btn-icon staging-remove" data-index="${i}" title="Remove">${ICONS.x}</button>
       </div>
     `;
@@ -1426,6 +1427,39 @@ function renderStagingArea() {
       thumb.style.cursor = 'pointer';
       thumb.addEventListener('click', () => showCompressModal(i));
     }
+  });
+
+  grid.querySelectorAll('.staging-name').forEach((nameEl) => {
+    nameEl.style.cursor = 'pointer';
+    nameEl.addEventListener('click', () => {
+      const idx = parseInt(nameEl.dataset.index);
+      const staged = stagedFiles[idx];
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'staging-rename-input';
+      input.value = staged.file.name;
+      nameEl.replaceWith(input);
+      input.focus();
+      input.select();
+
+      const commit = () => {
+        const newName = input.value.trim();
+        if (newName && newName !== staged.file.name) {
+          const renamed = new File([staged.file], newName, { type: staged.file.type });
+          stagedFiles[idx].file = renamed;
+          // Also rename originalFile so compress modal uses new name
+          const renamedOrig = new File([staged.originalFile], newName, { type: staged.originalFile.type });
+          stagedFiles[idx].originalFile = renamedOrig;
+        }
+        renderStagingArea();
+      };
+
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') { input.value = staged.file.name; input.blur(); }
+      });
+    });
   });
 
   grid.querySelectorAll('.staging-compress').forEach((btn) => {

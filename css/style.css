@@ -822,6 +822,20 @@ video.file-thumb {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.staging-name:hover { text-decoration: underline; text-decoration-thickness: 1px; }
+
+.staging-rename-input {
+  font-size: 13px;
+  padding: 1px 4px;
+  background: var(--bg);
+  border: 1px solid var(--primary);
+  border-radius: 4px;
+  color: var(--text);
+  width: 100%;
+  outline: none;
 }
 
 .staging-file-size { font-size: 11px; color: var(--text-muted); }
