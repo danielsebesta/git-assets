@@ -1498,13 +1498,13 @@ async function showCompressModal(index) {
         </div>
         <div class="compress-compare-wrapper" id="compress-compare-wrapper">
           <div class="compress-compare" id="compress-compare">
-            <img class="compress-img compress-img-original" src="${originalUrl}" alt="Original" />
+            <img class="compress-img compress-img-result" id="compress-result-img" src="${compressedUrl}" alt="Compressed" />
             <div class="compress-img-wrapper" id="compress-clip" style="width:50%;">
-              <img class="compress-img compress-img-result" id="compress-result-img" src="${compressedUrl}" alt="Compressed" />
+              <img class="compress-img compress-img-original" src="${originalUrl}" alt="Original" />
             </div>
             <div class="compress-slider-handle" id="compress-handle"></div>
-            <div class="compress-label compress-label-left" id="compress-label-left">Compressed</div>
-            <div class="compress-label compress-label-right">Original</div>
+            <div class="compress-label compress-label-left">Original</div>
+            <div class="compress-label compress-label-right" id="compress-label-right">Compressed</div>
           </div>
         </div>
       </div>
@@ -1580,7 +1580,7 @@ async function showCompressModal(index) {
   const qualitySlider = overlay.querySelector('#compress-quality');
   const qualityValue = overlay.querySelector('#quality-value');
   const formatSelect = overlay.querySelector('#compress-format');
-  const labelLeft = overlay.querySelector('#compress-label-left');
+  const labelRight = overlay.querySelector('#compress-label-right');
   const scaleSlider = overlay.querySelector('#compress-scale');
   const scaleValue = overlay.querySelector('#scale-value');
   const scaleDims = overlay.querySelector('#scale-dims');
@@ -1641,7 +1641,7 @@ async function showCompressModal(index) {
       if (tempUrl) { URL.revokeObjectURL(tempUrl); tempUrl = null; }
       resultImg.src = originalUrl;
       resultSizeEl.innerHTML = 'No compression';
-      labelLeft.textContent = 'Original';
+      labelRight.textContent = 'Original';
       compressedSize = original.size;
       return;
     }
@@ -1659,10 +1659,10 @@ async function showCompressModal(index) {
       if (preview.converted || preview.size < original.size) {
         const pct = Math.round((1 - preview.size / original.size) * 100);
         resultSizeEl.innerHTML = `Compressed: <strong>${formatSize(preview.size)}</strong>${dimsText} <span class="staging-savings">(-${pct}%)</span>`;
-        labelLeft.textContent = fmt === 'original' ? 'Resized' : fmt.toUpperCase();
+        labelRight.textContent = fmt === 'original' ? 'Resized' : fmt.toUpperCase();
       } else {
         resultSizeEl.innerHTML = `${formatSize(preview.size)}${dimsText} (no savings — keeping original)`;
-        labelLeft.textContent = 'Original';
+        labelRight.textContent = 'Original';
       }
     } catch {
       resultSizeEl.innerHTML = 'Compression failed';
