@@ -1,5 +1,5 @@
 import { login, logout, getToken } from './auth.js?v=14';
-import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, createRepo, MAX_FILE_SIZE, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=14';
+import { getUser, listRepos, listFiles, uploadFile, deleteFile, renameFile, batchUpload, getRepoInfo, MAX_FILE_SIZE, getRawUrl, CDN_PROVIDERS, getCommits, getCommitDetail, getRawUrlAtCommit, getRateLimit } from './github.js?v=14';
 import { getConfig, saveConfig, clearConfig, getRepoList, ASSETS_ROOT, getSavedRepos, toggleFavorite, isFavorite, getFavorites, addRecent, getRecent } from './config.js?v=14';
 import { compressImage, compressPreview, getSupportedFormats, FORMATS } from './compress.js?v=14';
 import { initSelection, setFiles, getSelected, clearSelection, selectAll, isSelected, handleClick as selectionClick } from './selection.js?v=14';
@@ -33,6 +33,9 @@ const ICONS = {
   logout: icon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'),
   settings: icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>'),
   check: icon('<polyline points="20 6 9 17 4 12"/>'),
+  upload: icon('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'),
+  folderPlus: icon('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>'),
+  search: icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
 };
 
 // ── File Type Detection ──
@@ -190,116 +193,61 @@ export async function renderSetup() {
     const container = app.querySelector('.setup-screen');
     container.innerHTML = `
       <h2>Pick a repository</h2>
-      <p>Choose any repo to store your assets, or enter one manually.</p>
+      <p>Choose a public repo to store your assets.</p>
+      <div class="setup-search-row">
+        <input type="text" id="setup-search" class="setup-search" placeholder="Search repos..." />
+        <a href="https://github.new" target="_blank" class="btn-icon" title="Create new repo on GitHub">${ICONS.folderPlus}</a>
+      </div>
       <ul class="setup-repo-list" id="repo-list"></ul>
-      <div class="setup-divider"><span>or</span></div>
-      <div class="setup-create">
-        <input type="text" id="create-repo-name" placeholder="New repo name (e.g. my-assets)" />
-        <button class="btn btn-primary btn-sm" id="create-repo-btn">Create</button>
-      </div>
-      <div class="setup-divider"><span>or</span></div>
-      <div class="setup-manual">
-        <input type="text" id="manual-repo" placeholder="owner/repo (e.g. myname/my-assets)" />
-        <button class="btn btn-sm" id="manual-btn">Use existing</button>
-      </div>
     `;
 
-    const list = $('#repo-list');
-    pushable.slice(0, 50).forEach((r) => {
-      const li = document.createElement('li');
-      li.className = `setup-repo-item${r.isPrivate ? ' setup-repo-disabled' : ''}`;
+    const renderRepoList = (repos) => {
+      const list = $('#repo-list');
+      list.innerHTML = '';
+      repos.slice(0, 50).forEach((r) => {
+        const li = document.createElement('li');
+        li.className = `setup-repo-item${r.isPrivate ? ' setup-repo-disabled' : ''}`;
 
-      const meta = [];
-      if (r.language) meta.push(r.language);
-      if (r.stars > 0) meta.push(`${r.stars} stars`);
-      if (r.sizeKB > 0) {
-        const size = r.sizeKB >= 1024 ? `${(r.sizeKB / 1024).toFixed(1)} MB` : `${r.sizeKB} KB`;
-        meta.push(size);
-      }
-      if (r.updatedAt) {
-        const days = Math.floor((Date.now() - new Date(r.updatedAt)) / 86400000);
-        if (days === 0) meta.push('today');
-        else if (days === 1) meta.push('yesterday');
-        else if (days < 30) meta.push(`${days}d ago`);
-        else if (days < 365) meta.push(`${Math.floor(days / 30)}mo ago`);
-        else meta.push(`${Math.floor(days / 365)}y ago`);
-      }
-
-      li.innerHTML = `
-        <img class="setup-repo-avatar" src="${r.avatarUrl}&s=40" alt="" width="20" height="20" loading="lazy" />
-        <div class="setup-repo-info">
-          <span class="setup-repo-name">${r.fullName}</span>
-          ${r.description ? `<span class="setup-repo-desc">${r.description.length > 80 ? r.description.slice(0, 80) + '...' : r.description}</span>` : ''}
-          ${meta.length ? `<span class="setup-repo-meta">${meta.join(' &middot; ')}</span>` : ''}
-        </div>
-      `;
-      if (!r.isPrivate) {
-        li.addEventListener('click', () => {
-          saveConfig({ owner: r.owner, repo: r.repo, branch: r.branch });
-          renderDashboard();
-        });
-      }
-      list.appendChild(li);
-    });
-
-    $('#manual-btn').addEventListener('click', async () => {
-      const val = $('#manual-repo').value.trim();
-      const parts = val.split('/');
-      if (parts.length !== 2 || !parts[0] || !parts[1]) {
-        showToast('Enter as owner/repo', 'error');
-        return;
-      }
-      const btn = $('#manual-btn');
-      btn.disabled = true;
-      btn.textContent = 'Checking...';
-      try {
-        const info = await getRepoInfo(parts[0], parts[1]);
-        if (info.private) {
-          showToast('This repo is private — jsDelivr CDN can only serve files from public repos.', 'error');
-          btn.disabled = false;
-          btn.textContent = 'Use';
-          return;
+        const meta = [];
+        if (r.language) meta.push(r.language);
+        if (r.stars > 0) meta.push(`${r.stars} stars`);
+        if (r.sizeKB > 0) {
+          const size = r.sizeKB >= 1024 ? `${(r.sizeKB / 1024).toFixed(1)} MB` : `${r.sizeKB} KB`;
+          meta.push(size);
         }
-        saveConfig({ owner: parts[0], repo: parts[1], branch: info.default_branch || 'main' });
-        renderDashboard();
-      } catch {
-        showToast('Repository not found or not accessible', 'error');
-        btn.disabled = false;
-        btn.textContent = 'Use';
-      }
-    });
+        if (r.updatedAt) {
+          const days = Math.floor((Date.now() - new Date(r.updatedAt)) / 86400000);
+          if (days === 0) meta.push('today');
+          else if (days === 1) meta.push('yesterday');
+          else if (days < 30) meta.push(`${days}d ago`);
+          else if (days < 365) meta.push(`${Math.floor(days / 30)}mo ago`);
+          else meta.push(`${Math.floor(days / 365)}y ago`);
+        }
 
-    $('#manual-repo').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') $('#manual-btn').click();
-    });
+        li.innerHTML = `
+          <img class="setup-repo-avatar" src="${r.avatarUrl}&s=40" alt="" width="20" height="20" loading="lazy" />
+          <div class="setup-repo-info">
+            <span class="setup-repo-name">${r.fullName}</span>
+            ${r.description ? `<span class="setup-repo-desc">${r.description.length > 80 ? r.description.slice(0, 80) + '...' : r.description}</span>` : ''}
+            ${meta.length ? `<span class="setup-repo-meta">${meta.join(' &middot; ')}</span>` : ''}
+          </div>
+        `;
+        if (!r.isPrivate) {
+          li.addEventListener('click', () => {
+            saveConfig({ owner: r.owner, repo: r.repo, branch: r.branch });
+            renderDashboard();
+          });
+        }
+        list.appendChild(li);
+      });
+    };
 
-    $('#create-repo-btn').addEventListener('click', async () => {
-      const name = $('#create-repo-name').value.trim();
-      if (!name) {
-        showToast('Enter a repository name', 'error');
-        return;
-      }
-      if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
-        showToast('Repo name can only contain letters, numbers, hyphens, dots, and underscores', 'error');
-        return;
-      }
-      const btn = $('#create-repo-btn');
-      btn.disabled = true;
-      btn.textContent = 'Creating...';
-      try {
-        const repo = await createRepo(name, 'Assets hosted via GitAssets');
-        saveConfig({ owner: repo.owner.login, repo: repo.name, branch: repo.default_branch || 'main' });
-        showToast(`Repository ${repo.full_name} created!`, 'success');
-        renderDashboard();
-      } catch (err) {
-        showToast(err.message, 'error');
-        btn.disabled = false;
-        btn.textContent = 'Create';
-      }
-    });
+    renderRepoList(pushable);
 
-    $('#create-repo-name').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') $('#create-repo-btn').click();
+    $('#setup-search').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = q ? pushable.filter((r) => r.fullName.toLowerCase().includes(q) || (r.description && r.description.toLowerCase().includes(q))) : pushable;
+      renderRepoList(filtered);
     });
   } catch (err) {
     showToast(err.message, 'error');
@@ -319,36 +267,44 @@ export async function renderDashboard() {
   $('#app').innerHTML = `
     <div class="dashboard">
       <div class="toolbar">
-        <div class="breadcrumbs" id="breadcrumbs"></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button class="btn btn-sm" id="change-repo-btn" title="Change repository">${config.owner}/${config.repo}</button>
-          <div class="storage-bar" id="storage-bar" title="Repository storage">
-            <div class="storage-bar-fill" id="storage-fill"></div>
-            <span class="storage-label" id="storage-label"></span>
+        <div class="toolbar-left">
+          <div class="breadcrumbs" id="breadcrumbs"></div>
+        </div>
+        <div class="toolbar-right">
+          <button class="toolbar-repo" id="change-repo-btn" title="Change repository">
+            <span class="toolbar-repo-name">${config.owner}/${config.repo}</span>
+            <div class="storage-bar" id="storage-bar" title="Repository storage">
+              <div class="storage-bar-fill" id="storage-fill"></div>
+              <span class="storage-label" id="storage-label"></span>
+            </div>
+          </button>
+          <div class="toolbar-actions">
+            <button class="btn-icon" id="new-folder-btn" title="New folder">${ICONS.folderPlus}</button>
+            <button class="btn-icon" id="history-btn" title="History">${ICONS.clock}</button>
+            <button class="btn-icon" id="stats-btn" title="Stats">${ICONS.chart}</button>
           </div>
-          <button class="btn btn-sm" id="new-folder-btn">New folder</button>
-          <button class="btn btn-sm btn-icon" id="history-btn" title="History" aria-label="History">${ICONS.clock}</button>
-          <button class="btn btn-sm btn-icon" id="stats-btn" title="Stats" aria-label="Stats">${ICONS.chart}</button>
-          <button class="btn btn-primary btn-sm" id="upload-btn">Upload</button>
+          <button class="btn btn-primary btn-sm" id="upload-btn">${ICONS.upload} Upload</button>
         </div>
       </div>
-      <div class="bulk-bar" id="bulk-bar" style="display:none;">
-        <span id="bulk-count">0 selected</span>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-sm" id="bulk-select-all">Select all</button>
-          <button class="btn btn-sm" id="bulk-copy">Copy URLs</button>
-          <button class="btn btn-sm btn-danger" id="bulk-delete">Delete</button>
-          <button class="btn btn-sm" id="bulk-clear">Clear</button>
+      <div class="action-bar">
+        <div class="filter-bar">
+          <input type="text" id="search-input" class="filter-search" placeholder="Filter files..." />
+          <select id="sort-select" class="filter-sort">
+            <option value="name-asc">Name A-Z</option>
+            <option value="name-desc">Name Z-A</option>
+            <option value="size-asc">Size small first</option>
+            <option value="size-desc">Size large first</option>
+          </select>
         </div>
-      </div>
-      <div class="filter-bar">
-        <input type="text" id="search-input" class="filter-search" placeholder="Filter files..." />
-        <select id="sort-select" class="filter-sort">
-          <option value="name-asc">Name A-Z</option>
-          <option value="name-desc">Name Z-A</option>
-          <option value="size-asc">Size small first</option>
-          <option value="size-desc">Size large first</option>
-        </select>
+        <div class="bulk-bar" id="bulk-bar" style="display:none;">
+          <span id="bulk-count">0 selected</span>
+          <div class="bulk-actions">
+            <button class="btn btn-sm" id="bulk-select-all">Select all</button>
+            <button class="btn btn-sm" id="bulk-copy">Copy URLs</button>
+            <button class="btn btn-sm btn-danger" id="bulk-delete">${ICONS.trash} Delete</button>
+            <button class="btn-icon" id="bulk-clear" title="Clear selection">${ICONS.x}</button>
+          </div>
+        </div>
       </div>
       <div class="dropzone" id="dropzone">
         <div class="dropzone-text">Drop files here, paste from clipboard, or click Upload</div>
@@ -2232,7 +2188,7 @@ async function loadRepoSize(config) {
     if (!fill || !label || !bar) return;
 
     fill.style.width = `${pct}%`;
-    label.textContent = `${formatSize(sizeBytes)} / 1 GB`;
+    bar.title = `${formatSize(sizeBytes)} / 1 GB`;
 
     bar.classList.remove('storage-ok', 'storage-warn', 'storage-danger');
     if (pct > 90) bar.classList.add('storage-danger');
