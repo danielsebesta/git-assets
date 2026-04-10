@@ -451,7 +451,7 @@ async function loadFolderPreviews(config) {
         return `<div class="folder-grid-cell folder-grid-icon">${getFileIcon(type)}</div>`;
       }).join('');
 
-      slot.innerHTML = `<div class="folder-grid">${cells}</div>`;
+      slot.insertAdjacentHTML('afterbegin', `<div class="folder-grid">${cells}</div>`);
     } catch { /* ignore */ }
   }
 }
@@ -468,7 +468,7 @@ function createFileCard(file, config, index) {
 
   let thumbHtml;
   if (isDir) {
-    thumbHtml = `<div class="file-thumb-placeholder folder-preview-slot" data-folder-path="${file.path}"><span class="folder-icon">${ICONS.folder}</span></div>`;
+    thumbHtml = `<div class="file-thumb-placeholder folder-preview-slot" data-folder-path="${file.path}"><span class="folder-icon folder-icon-front">${ICONS.folder}</span></div>`;
   } else if (fileType === 'image') {
     const thumbUrl = getRawUrl(config.owner, config.repo, config.branch, file.path);
     thumbHtml = `<img class="file-thumb" src="${thumbUrl}" alt="${file.name}" loading="lazy" /><div class="hover-preview"><img src="${thumbUrl}" alt="${file.name}" /></div>`;
