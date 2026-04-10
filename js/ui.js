@@ -132,6 +132,20 @@ function setFolderPreviews(on) {
   localStorage.setItem(FOLDER_PREVIEW_KEY, on ? '1' : '0');
 }
 
+const COMPRESS_KEY = 'gitassets_compress';
+
+function getCompressDefaults() {
+  try {
+    const stored = localStorage.getItem(COMPRESS_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch { /* ignore */ }
+  return { enabled: true, format: 'webp', quality: 85 };
+}
+
+function setCompressDefaults(opts) {
+  localStorage.setItem(COMPRESS_KEY, JSON.stringify(opts));
+}
+
 function getDefaultCdnProvider() {
   const id = getDefaultCdn();
   return CDN_PROVIDERS.find((p) => p.id === id) || CDN_PROVIDERS[0];
@@ -316,7 +330,7 @@ export async function renderDashboard() {
       </div>
       <div class="dropzone" id="dropzone">
         <div class="dropzone-text">Drop files here, paste from clipboard, or click Upload</div>
-        <div class="dropzone-hint">Images auto-compress to WebP</div>
+        <div class="dropzone-hint">${(() => { const c = getCompressDefaults(); return c.enabled ? `Images auto-compress to ${c.format.toUpperCase()} at ${c.quality}%` : 'Drag & drop or paste files'; })()}</div>
       </div>
       <div id="file-area">
         <div style="text-align:center;padding:40px;"><span class="spinner"></span></div>
@@ -1311,17 +1325,35 @@ async function stageFiles(fileList) {
     }
 
     const isImage = file.type.startsWith('image/') && file.type !== 'image/svg+xml';
-    stagedFiles.push({
-      file,
-      originalFile: file,
-      preview: URL.createObjectURL(file),
-      converted: false,
-      originalSize: file.size,
-      savings: 0,
-      compressible: isImage,
-      format: 'original',
-      quality: 0.85,
-    });
+    const compress = getCompressDefaults();
+
+    if (isImage && compress.enabled) {
+      const q = compress.quality / 100;
+      const result = await compressImage(file, { quality: q, format: compress.format });
+      stagedFiles.push({
+        file: result.file,
+        originalFile: file,
+        preview: URL.createObjectURL(result.file),
+        converted: result.converted,
+        originalSize: file.size,
+        savings: result.savings || 0,
+        compressible: true,
+        format: compress.format,
+        quality: q,
+      });
+    } else {
+      stagedFiles.push({
+        file,
+        originalFile: file,
+        preview: URL.createObjectURL(file),
+        converted: false,
+        originalSize: file.size,
+        savings: 0,
+        compressible: isImage,
+        format: 'original',
+        quality: 0.85,
+      });
+    }
     renderStagingArea();
   }
 }
@@ -2375,8 +2407,12 @@ function showUserMenu(user) {
   const theme = getTheme();
   const defaultCdn = getDefaultCdn();
   const folderPreviews = getFolderPreviews();
+  const compress = getCompressDefaults();
+  const supportedFormats = FORMATS.filter((f) => f.id !== 'original');
   const menu = document.createElement('div');
   menu.className = 'cdn-menu user-menu';
+
+  const emptyCheck = '<span style="width:16px;display:inline-block;"></span>';
 
   menu.innerHTML = `
     <div class="user-menu-header">
@@ -2392,14 +2428,33 @@ function showUserMenu(user) {
       <span>${theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
     </button>
     <button class="cdn-menu-item" data-action="folder-previews">
-      ${folderPreviews ? ICONS.check : '<span style="width:16px;display:inline-block;"></span>'}
+      ${folderPreviews ? ICONS.check : emptyCheck}
       <span>Folder previews</span>
     </button>
+    <div class="user-menu-divider"></div>
+    <div class="user-menu-section-label">Auto-compress uploads</div>
+    <button class="cdn-menu-item" data-action="compress-toggle">
+      ${compress.enabled ? ICONS.check : emptyCheck}
+      <span>Enabled</span>
+    </button>
+    <div class="user-menu-compress ${compress.enabled ? '' : 'user-menu-compress-disabled'}">
+      <div class="user-menu-inline">
+        <span class="user-menu-inline-label">Format</span>
+        <select class="user-menu-select" id="um-compress-format">
+          ${supportedFormats.map((f) => `<option value="${f.id}" ${f.id === compress.format ? 'selected' : ''}>${f.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="user-menu-inline">
+        <span class="user-menu-inline-label">Quality</span>
+        <input type="range" id="um-compress-quality" min="10" max="100" value="${compress.quality}" class="user-menu-range" />
+        <span class="user-menu-range-val" id="um-quality-val">${compress.quality}%</span>
+      </div>
+    </div>
     <div class="user-menu-divider"></div>
     <div class="user-menu-section-label">Default CDN</div>
     ${CDN_PROVIDERS.map((p) => `
       <button class="cdn-menu-item user-menu-cdn-item" data-action="cdn" data-cdn="${p.id}">
-        ${p.id === defaultCdn ? ICONS.check : '<span style="width:16px;display:inline-block;"></span>'}
+        ${p.id === defaultCdn ? ICONS.check : emptyCheck}
         <span>${p.name}</span>
       </button>
     `).join('')}
@@ -2432,6 +2487,12 @@ function showUserMenu(user) {
         showToast(next ? 'Folder previews enabled' : 'Folder previews disabled');
         const config = getConfig();
         if (config) loadFiles(config);
+      } else if (action === 'compress-toggle') {
+        const c = getCompressDefaults();
+        c.enabled = !c.enabled;
+        setCompressDefaults(c);
+        menu.remove();
+        showToast(c.enabled ? 'Auto-compress enabled' : 'Auto-compress disabled');
       } else if (action === 'cdn') {
         setDefaultCdn(item.dataset.cdn);
         menu.remove();
@@ -2443,6 +2504,29 @@ function showUserMenu(user) {
       }
     });
   });
+
+  // Compress format/quality controls (don't close menu)
+  const umFormat = menu.querySelector('#um-compress-format');
+  const umQuality = menu.querySelector('#um-compress-quality');
+  const umQualityVal = menu.querySelector('#um-quality-val');
+
+  if (umFormat) {
+    umFormat.addEventListener('click', (e) => e.stopPropagation());
+    umFormat.addEventListener('change', () => {
+      const c = getCompressDefaults();
+      c.format = umFormat.value;
+      setCompressDefaults(c);
+    });
+  }
+  if (umQuality) {
+    umQuality.addEventListener('click', (e) => e.stopPropagation());
+    umQuality.addEventListener('input', () => {
+      umQualityVal.textContent = `${umQuality.value}%`;
+      const c = getCompressDefaults();
+      c.quality = parseInt(umQuality.value);
+      setCompressDefaults(c);
+    });
+  }
 
   const close = (e) => {
     if (!menu.contains(e.target) && e.target !== btn) {
