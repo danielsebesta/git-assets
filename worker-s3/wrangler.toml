@@ -3,10 +3,9 @@ main = "index.js"
 compatibility_date = "2024-01-01"
 workers_dev = true
 
-# Configure your own domain:
-# routes = [
-#   { pattern = "s3.git-assets.example.com", zone_name = "example.com", custom_domain = true }
-# ]
+routes = [
+  { pattern = "s3-git-assets.sebesta.dev", zone_name = "sebesta.dev", custom_domain = true }
+]
 
 # No env vars needed — auth comes from the S3 request credentials
 # accessKeyId = "owner/repo" (e.g. "danielsebesta/my-assets")
