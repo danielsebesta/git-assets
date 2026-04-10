@@ -1214,6 +1214,12 @@ video.file-thumb {
   margin-top: 16px;
 }
 
+.modal-actions-stack {
+  flex-direction: column;
+}
+
+.modal-actions-stack .btn { text-align: center; }
+
 /* ── Stats ── */
 .stats-grid { display: flex; flex-direction: column; gap: 12px; }
 .stats-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }

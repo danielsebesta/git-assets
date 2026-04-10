@@ -1319,16 +1319,51 @@ function setupUploadButton(config) {
   });
 }
 
+function showDuplicateDialog(name) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <h3>File already exists</h3>
+        <p><strong>${escapeHtml(name)}</strong> already exists in this folder.</p>
+        <div class="modal-actions modal-actions-stack">
+          <button class="btn btn-sm btn-primary" data-action="overwrite">Overwrite</button>
+          <button class="btn btn-sm" data-action="rename">Keep both (add suffix)</button>
+          <button class="btn btn-sm" data-action="skip">Skip</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    trapFocus(overlay);
+    overlay.querySelectorAll('[data-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        overlay.remove();
+        resolve(btn.dataset.action);
+      });
+    });
+  });
+}
+
 async function stageFiles(fileList) {
   const files = Array.from(fileList);
-  for (const file of files) {
+  for (let file of files) {
     const isDuplicate = stagedFiles.some((s) => s.file.name === file.name && s.file.size === file.size);
     if (isDuplicate) continue;
 
-    // Warn if file already exists in repo
+    // Check if file already exists in repo
     const existsInRepo = currentFiles.some((f) => f.name === file.name);
     if (existsInRepo) {
-      showToast(`${file.name} already exists — will overwrite`, 'error');
+      const action = await showDuplicateDialog(file.name);
+      if (action === 'skip') continue;
+      if (action === 'rename') {
+        const base = file.name.replace(/(\.[^.]+)$/, '');
+        const ext = file.name.match(/(\.[^.]+)$/)?.[1] || '';
+        let n = 1;
+        while (currentFiles.some((f) => f.name === `${base}-${n}${ext}`) || stagedFiles.some((s) => s.file.name === `${base}-${n}${ext}`)) n++;
+        const newName = `${base}-${n}${ext}`;
+        file = new File([file], newName, { type: file.type });
+      }
     }
 
     const isImage = file.type.startsWith('image/') && file.type !== 'image/svg+xml';
