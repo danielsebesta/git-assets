@@ -1,5 +1,13 @@
 # GitAssets
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Deploy to GitHub Pages](https://img.shields.io/badge/deploy-GitHub%20Pages-222?logo=githubpages)](https://github.com/danielsebesta/git-assets/generate)
+[![Deploy Worker to Cloudflare](https://img.shields.io/badge/deploy_worker-Cloudflare-f38020?logo=cloudflare&logoColor=white)](https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/workers/new)
+[![GitHub stars](https://img.shields.io/github/stars/danielsebesta/git-assets?style=flat&logo=github)](https://github.com/danielsebesta/git-assets/stargazers)
+[![GitHub repo size](https://img.shields.io/github/repo-size/danielsebesta/git-assets)](https://github.com/danielsebesta/git-assets)
+[![No Build](https://img.shields.io/badge/build-none-brightgreen)](#)
+[![jsDelivr CDN](https://img.shields.io/badge/CDN-jsDelivr-e84d3d?logo=jsdelivr&logoColor=white)](https://www.jsdelivr.com/)
+
 Turn any GitHub repository into a free CDN for images and static assets. Upload files to your own repo, serve them instantly via [jsDelivr](https://www.jsdelivr.com/).
 
 **[Live Demo](https://git-assets.sebesta.dev)** · **[Use this template](https://github.com/danielsebesta/git-assets/generate)**
