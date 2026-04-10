@@ -573,19 +573,18 @@ video.file-thumb {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius) var(--radius) 0 0;
-  overflow: hidden;
-  gap: 1px;
-  background: var(--border);
+  width: 60%;
+  height: 60%;
+  margin: auto;
+  gap: 6px;
   opacity: 0;
   animation: fadeIn 0.3s ease forwards;
 }
 
 .folder-grid-cell {
   overflow: hidden;
-  background: var(--surface);
+  border-radius: 4px;
+  background: var(--bg);
 }
 
 .folder-grid-cell img {
@@ -593,6 +592,7 @@ video.file-thumb {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 4px;
 }
 
 .folder-grid-icon {
@@ -601,6 +601,8 @@ video.file-thumb {
   justify-content: center;
   color: var(--text-muted);
 }
+
+.folder-grid-icon svg { width: 14px; height: 14px; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
