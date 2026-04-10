@@ -567,6 +567,19 @@ video.file-thumb {
 
 .folder-icon { display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
 
+.folder-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius) var(--radius) 0 0;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.folder-preview-slot { position: relative; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
 /* Hover preview */
 .file-card:has(.file-thumb):hover .hover-preview {
   display: block;

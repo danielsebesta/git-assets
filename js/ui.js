@@ -122,6 +122,16 @@ function setDefaultCdn(id) {
   localStorage.setItem(CDN_KEY, id);
 }
 
+const FOLDER_PREVIEW_KEY = 'gitassets_folder_previews';
+
+function getFolderPreviews() {
+  return localStorage.getItem(FOLDER_PREVIEW_KEY) === '1';
+}
+
+function setFolderPreviews(on) {
+  localStorage.setItem(FOLDER_PREVIEW_KEY, on ? '1' : '0');
+}
+
 function getDefaultCdnProvider() {
   const id = getDefaultCdn();
   return CDN_PROVIDERS.find((p) => p.id === id) || CDN_PROVIDERS[0];
@@ -416,8 +426,25 @@ async function loadFiles(config) {
     filtered.forEach((file, idx) => {
       grid.appendChild(createFileCard(file, config, idx));
     });
+
+    if (getFolderPreviews()) loadFolderPreviews(config);
   } catch (err) {
     area.innerHTML = `<div class="empty-state"><p style="color:var(--danger);">Error: ${err.message}</p></div>`;
+  }
+}
+
+async function loadFolderPreviews(config) {
+  const slots = $$('.folder-preview-slot');
+  for (const slot of slots) {
+    const folderPath = slot.dataset.folderPath;
+    try {
+      const files = await listFiles(config.owner, config.repo, folderPath);
+      const img = files.find((f) => f.type === 'file' && IMG_RE.test(f.name));
+      if (img) {
+        const thumbUrl = getRawUrl(config.owner, config.repo, config.branch, img.path);
+        slot.innerHTML = `<img class="file-thumb folder-preview-img" src="${thumbUrl}" alt="" loading="lazy" />`;
+      }
+    } catch { /* ignore */ }
   }
 }
 
@@ -433,7 +460,7 @@ function createFileCard(file, config, index) {
 
   let thumbHtml;
   if (isDir) {
-    thumbHtml = `<div class="file-thumb-placeholder"><span class="folder-icon">${ICONS.folder}</span></div>`;
+    thumbHtml = `<div class="file-thumb-placeholder folder-preview-slot" data-folder-path="${file.path}"><span class="folder-icon">${ICONS.folder}</span></div>`;
   } else if (fileType === 'image') {
     const thumbUrl = getRawUrl(config.owner, config.repo, config.branch, file.path);
     thumbHtml = `<img class="file-thumb" src="${thumbUrl}" alt="${file.name}" loading="lazy" /><div class="hover-preview"><img src="${thumbUrl}" alt="${file.name}" /></div>`;
@@ -2247,6 +2274,7 @@ function showUserMenu(user) {
 
   const theme = getTheme();
   const defaultCdn = getDefaultCdn();
+  const folderPreviews = getFolderPreviews();
   const menu = document.createElement('div');
   menu.className = 'cdn-menu user-menu';
 
@@ -2262,6 +2290,10 @@ function showUserMenu(user) {
     <button class="cdn-menu-item" data-action="theme">
       ${theme === 'dark' ? ICONS.sun : ICONS.moon}
       <span>${theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+    </button>
+    <button class="cdn-menu-item" data-action="folder-previews">
+      ${folderPreviews ? ICONS.check : '<span style="width:16px;display:inline-block;"></span>'}
+      <span>Folder previews</span>
     </button>
     <div class="user-menu-divider"></div>
     <div class="user-menu-section-label">Default CDN</div>
@@ -2293,6 +2325,13 @@ function showUserMenu(user) {
         const next = getTheme() === 'dark' ? 'light' : 'dark';
         setTheme(next);
         menu.remove();
+      } else if (action === 'folder-previews') {
+        const next = !getFolderPreviews();
+        setFolderPreviews(next);
+        menu.remove();
+        showToast(next ? 'Folder previews enabled' : 'Folder previews disabled');
+        const config = getConfig();
+        if (config) loadFiles(config);
       } else if (action === 'cdn') {
         setDefaultCdn(item.dataset.cdn);
         menu.remove();
