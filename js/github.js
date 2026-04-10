@@ -1,4 +1,4 @@
-import { getToken, logout, needsRefresh, refreshToken } from './auth.js?v=13';
+import { getToken, logout, needsRefresh, refreshToken } from './auth.js?v=14';
 
 const API = 'https://api.github.com';
 
