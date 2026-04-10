@@ -154,7 +154,9 @@ export async function listFiles(owner, repo, path = '') {
   const endpoint = path
     ? `${API}/repos/${owner}/${repo}/contents/${path}`
     : `${API}/repos/${owner}/${repo}/contents`;
-  const res = await apiFetch(endpoint);
+  const res = await apiFetch(endpoint, {
+    headers: { 'If-None-Match': '' },
+  });
   if (!res.ok) {
     if (res.status === 404) return [];
     throw new Error('Failed to list files');

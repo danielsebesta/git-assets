@@ -1829,18 +1829,21 @@ async function commitStagedFiles(message) {
     fill.style.width = '100%';
     status.textContent = `Uploaded ${files.length} file${files.length > 1 ? 's' : ''}`;
     stagedFiles = [];
+    renderStagingArea();
+
+    // GitHub API needs a moment to propagate — retry until files appear
+    let retries = 5;
+    while (retries-- > 0) {
+      await new Promise((r) => setTimeout(r, 1500));
+      await loadFiles(config);
+      const uploaded = batchFiles.some((bf) => currentFiles.find((f) => f.path === bf.path));
+      if (uploaded) break;
+    }
+    loadRepoSize(config);
   } catch (err) {
     showToast(`Upload failed: ${err.message}. Files kept in staging for retry.`, 'error');
-    // Don't clear staging — let user retry
+    renderStagingArea();
   }
-
-  renderStagingArea();
-
-  // GitHub API needs a moment to propagate changes
-  await new Promise((r) => setTimeout(r, 1500));
-
-  await loadFiles(config);
-  loadRepoSize(config);
 
   setTimeout(() => {
     bar.classList.remove('visible');
