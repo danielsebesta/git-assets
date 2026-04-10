@@ -567,16 +567,40 @@ video.file-thumb {
 
 .folder-icon { display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
 
-.folder-preview-img {
+.folder-preview-slot { position: relative; }
+
+.folder-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   width: 100%;
   height: 100%;
-  object-fit: cover;
   border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+  gap: 1px;
+  background: var(--border);
   opacity: 0;
   animation: fadeIn 0.3s ease forwards;
 }
 
-.folder-preview-slot { position: relative; }
+.folder-grid-cell {
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.folder-grid-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.folder-grid-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 

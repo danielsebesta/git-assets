@@ -439,11 +439,19 @@ async function loadFolderPreviews(config) {
     const folderPath = slot.dataset.folderPath;
     try {
       const files = await listFiles(config.owner, config.repo, folderPath);
-      const img = files.find((f) => f.type === 'file' && IMG_RE.test(f.name));
-      if (img) {
-        const thumbUrl = getRawUrl(config.owner, config.repo, config.branch, img.path);
-        slot.innerHTML = `<img class="file-thumb folder-preview-img" src="${thumbUrl}" alt="" loading="lazy" />`;
-      }
+      const items = files.filter((f) => f.type === 'file').slice(0, 4);
+      if (items.length === 0) continue;
+
+      const cells = items.map((f) => {
+        const type = getFileType(f.name);
+        if (type === 'image') {
+          const url = getRawUrl(config.owner, config.repo, config.branch, f.path);
+          return `<div class="folder-grid-cell"><img src="${url}" alt="" loading="lazy" /></div>`;
+        }
+        return `<div class="folder-grid-cell folder-grid-icon">${getFileIcon(type)}</div>`;
+      }).join('');
+
+      slot.innerHTML = `<div class="folder-grid">${cells}</div>`;
     } catch { /* ignore */ }
   }
 }
