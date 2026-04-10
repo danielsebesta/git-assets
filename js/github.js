@@ -141,7 +141,7 @@ export async function batchUpload(owner, repo, branch, files, message) {
   // 6. Update branch ref
   const updateRes = await apiFetch(`${API}/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
     method: 'PATCH',
-    body: JSON.stringify({ sha: newCommitData.sha }),
+    body: JSON.stringify({ sha: newCommitData.sha, force: true }),
   });
   if (!updateRes.ok) throw new Error('Failed to update branch');
 

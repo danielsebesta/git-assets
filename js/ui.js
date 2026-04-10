@@ -1834,14 +1834,18 @@ async function commitStagedFiles(message) {
     // Don't clear staging — let user retry
   }
 
+  renderStagingArea();
+
+  // GitHub API needs a moment to propagate changes
+  await new Promise((r) => setTimeout(r, 1500));
+
+  await loadFiles(config);
+  loadRepoSize(config);
+
   setTimeout(() => {
     bar.classList.remove('visible');
     fill.style.width = '0%';
-  }, 2000);
-
-  renderStagingArea();
-  await loadFiles(config);
-  loadRepoSize(config);
+  }, 500);
 }
 
 function setupClipboardPaste() {
