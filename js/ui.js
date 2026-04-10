@@ -209,8 +209,6 @@ export async function renderSetup() {
         li.className = `setup-repo-item${r.isPrivate ? ' setup-repo-disabled' : ''}`;
 
         const meta = [];
-        if (r.language) meta.push(r.language);
-        if (r.stars > 0) meta.push(`${r.stars} stars`);
         if (r.sizeKB > 0) {
           const size = r.sizeKB >= 1024 ? `${(r.sizeKB / 1024).toFixed(1)} MB` : `${r.sizeKB} KB`;
           meta.push(size);
