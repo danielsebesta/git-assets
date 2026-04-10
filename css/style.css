@@ -307,8 +307,13 @@ body {
 /* ── Setup Wizard ── */
 .setup-screen {
   max-width: 520px;
-  margin: 80px auto;
+  margin: 0 auto;
   padding: 24px;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .setup-screen h2 {
@@ -335,8 +340,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 16px;
-  max-height: calc(100dvh - 240px);
+  margin-bottom: 0;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
