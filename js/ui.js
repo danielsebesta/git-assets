@@ -1503,8 +1503,8 @@ async function showCompressModal(index) {
               <img class="compress-img compress-img-result" id="compress-result-img" src="${compressedUrl}" alt="Compressed" />
             </div>
             <div class="compress-slider-handle" id="compress-handle"></div>
-            <div class="compress-label compress-label-left">Original</div>
-            <div class="compress-label compress-label-right" id="compress-label-right">Compressed</div>
+            <div class="compress-label compress-label-left" id="compress-label-left">Compressed</div>
+            <div class="compress-label compress-label-right">Original</div>
           </div>
         </div>
       </div>
@@ -1580,7 +1580,7 @@ async function showCompressModal(index) {
   const qualitySlider = overlay.querySelector('#compress-quality');
   const qualityValue = overlay.querySelector('#quality-value');
   const formatSelect = overlay.querySelector('#compress-format');
-  const labelRight = overlay.querySelector('#compress-label-right');
+  const labelLeft = overlay.querySelector('#compress-label-left');
   const scaleSlider = overlay.querySelector('#compress-scale');
   const scaleValue = overlay.querySelector('#scale-value');
   const scaleDims = overlay.querySelector('#scale-dims');
@@ -1641,7 +1641,7 @@ async function showCompressModal(index) {
       if (tempUrl) { URL.revokeObjectURL(tempUrl); tempUrl = null; }
       resultImg.src = originalUrl;
       resultSizeEl.innerHTML = 'No compression';
-      labelRight.textContent = 'Original';
+      labelLeft.textContent = 'Original';
       compressedSize = original.size;
       return;
     }
@@ -1659,10 +1659,10 @@ async function showCompressModal(index) {
       if (preview.converted || preview.size < original.size) {
         const pct = Math.round((1 - preview.size / original.size) * 100);
         resultSizeEl.innerHTML = `Compressed: <strong>${formatSize(preview.size)}</strong>${dimsText} <span class="staging-savings">(-${pct}%)</span>`;
-        labelRight.textContent = fmt === 'original' ? 'Resized' : fmt.toUpperCase();
+        labelLeft.textContent = fmt === 'original' ? 'Resized' : fmt.toUpperCase();
       } else {
         resultSizeEl.innerHTML = `${formatSize(preview.size)}${dimsText} (no savings — keeping original)`;
-        labelRight.textContent = 'Original';
+        labelLeft.textContent = 'Original';
       }
     } catch {
       resultSizeEl.innerHTML = 'Compression failed';
