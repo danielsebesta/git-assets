@@ -48,7 +48,7 @@ body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--text);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* ── Utility ── */
@@ -273,7 +273,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 61px);
+  min-height: calc(100dvh - 61px);
   text-align: center;
   padding: 24px;
 }
@@ -336,7 +336,7 @@ body {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
-  max-height: calc(100vh - 240px);
+  max-height: calc(100dvh - 240px);
   overflow-y: auto;
 }
 
@@ -1345,7 +1345,7 @@ video.file-thumb {
 .history-modal {
   max-width: 600px;
   width: 95%;
-  max-height: 80vh;
+  max-height: 80dvh;
   display: flex;
   flex-direction: column;
 }
@@ -1473,7 +1473,7 @@ video.file-thumb {
 
 /* ── Landing Page ── */
 .landing {
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* CTA Button (shared with app) */
